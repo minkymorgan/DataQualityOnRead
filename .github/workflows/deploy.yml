@@ -31,7 +31,7 @@ jobs:
       - name: Install Pandoc & LaTeX
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq pandoc texlive-xetex texlive-fonts-recommended texlive-fonts-extra lmodern librsvg2-bin fonts-noto-cjk fonts-noto-color-emoji
+          sudo apt-get install -y -qq pandoc texlive-xetex texlive-fonts-recommended texlive-fonts-extra texlive-lang-chinese lmodern librsvg2-bin fonts-noto-cjk fonts-noto-color-emoji
 
       - name: Prepare combined markdown
         run: |
