@@ -2,9 +2,13 @@
 authors = ["Andrew Morgan"]
 language = "en"
 multilingual = false
-src = "src"
+src = "src/en"
 title = "Data Quality on Read"
 description = "A practical guide to mask-based data profiling with bytefreq and dataradar"
+
+# Translation structure: src/en/, src/fr/, src/es/, etc.
+# When translating, create a separate book.toml per language or
+# use a build script that swaps src= for each language build.
 
 [build]
 build-dir = "docs"
