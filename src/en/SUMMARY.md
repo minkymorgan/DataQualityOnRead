@@ -1,7 +1,9 @@
 # Summary
 
-[Introduction](./introduction.md)
+[Title](./title.md)
 [Copyright](./copyright.md)
+[Foreword](./foreword.md)
+[Introduction](./introduction.md)
 
 # Part I — The Problem
 
