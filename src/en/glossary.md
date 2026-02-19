@@ -38,6 +38,8 @@ This glossary defines the key technical terms used throughout this book. In tran
 
 **population profile** — A frequency table of masks for a column, sorted by count. Shows the dominant structural patterns and the long tail of rare masks.
 
+**Rayon** — A Rust library for data parallelism that enables multi-threaded processing with minimal code changes. bytefreq uses Rayon to parallelise mask generation and assertion rule evaluation across columns, utilising all available CPU cores automatically.
+
 **provenance** — The ability to trace a derived or treated value back to the original raw value it was computed from. The flat enhanced format preserves provenance by keeping the `.raw` column immutable alongside all derived columns.
 
 **.raw** — The column in the flat enhanced format that contains the original, untouched value exactly as received from the source. Never modified, never overwritten.

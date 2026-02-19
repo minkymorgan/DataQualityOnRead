@@ -1,6 +1,6 @@
 # The Assertion Rules Engine: Inside bytefreq
 
-The preceding chapters described the DQOR framework conceptually — masks, population analysis, error codes, treatment functions, and the flat enhanced format. This chapter opens the bonnet. We will walk through the actual Rust code that implements assertion rules in bytefreq, show how the rules engine works, and explain how to add a new rule.
+The preceding chapters described the DQOR framework conceptually — masks, population analysis, error codes, treatment functions, and the flat enhanced format. This chapter opens the bonnet. We will walk through the actual Rust code that implements assertion rules in bytefreq, show how the rules engine works, and explain how to add a new rule. If you are not a Rust programmer, do not worry — the patterns are straightforward and the logic reads more like pseudocode than systems programming. The important thing is the *design patterns*, not the language syntax.
 
 ## Architecture
 
@@ -171,7 +171,7 @@ Most rules are gated by the LU or HU mask. The UK postcode check only fires when
 
 This is efficient. Rather than running every assertion against every value (which would be wasteful for a million-row file with dozens of columns), the mask pre-filters. A name column with mask `Aaaa Aaaaa` will skip the postcode check, the numeric check, and the date parser entirely. Only rules whose structural precondition matches the mask will execute.
 
-This is the same principle described in Chapter 7 (masks as error codes), but applied in reverse: instead of using masks to *detect* problems, we use them to *select* which enhancement rules are applicable.
+This is the same principle introduced in Chapter 7 (Masks as Error Codes), but applied in reverse: instead of using masks to *detect* problems, we use them to *select* which enhancement rules are applicable.
 
 ## Pattern 2: Field-Name-Aware Rules
 
@@ -368,4 +368,66 @@ The assertion rules in bytefreq are not a closed set. They are a starting point 
 
 This is the same continuous improvement loop described in Chapter 8 (treatment functions): profile the data, discover new patterns, write rules to detect and characterise them, and add the rules to the library. Over time, the library grows to reflect the kinds of data that bytefreq's users actually encounter, making the flat enhanced output increasingly useful with each release.
 
-The rules are also an invitation. Because the engine is open source and the pattern for adding a new rule is straightforward — write a function, gate it by mask, wire it into `execute_assertions` — users with domain-specific knowledge can contribute rules for their own data types. A healthcare organisation might add rules for NHS number validation. A financial services firm might add rules for IBAN detection and decomposition. A geospatial team might add rules for coordinate reference system detection. The mask-gated architecture means these domain-specific rules coexist with the general-purpose ones without interference, and the flat enhanced format ensures that all assertions — general and domain-specific — are delivered to consumers in a consistent structure.
+The rules are also an invitation. Because the engine is open source and the pattern for adding a new rule is straightforward — write a function, gate it by mask, wire it into `execute_assertions` — users with domain-specific knowledge can contribute rules for their own data types. The mask-gated architecture means domain-specific rules coexist with the general-purpose ones without interference, and the flat enhanced format ensures that all assertions — general and domain-specific — are delivered to consumers in a consistent structure.
+
+To make this concrete, here are sketches for three domain-specific rules that follow the same patterns described above.
+
+### Example: NHS Number Validation (Healthcare)
+
+An NHS number is a 10-digit identifier with a modulus 11 check digit. The mask gate is simple: `hu == "9999999999"` (exactly 10 digits). The validation function computes the weighted sum and checks the remainder:
+
+```rust
+// Gate: hu == "9999999999"
+pub fn is_nhs_number(value: &str) -> bool {
+    let digits: Vec<u32> = value.chars().filter_map(|c| c.to_digit(10)).collect();
+    if digits.len() != 10 { return false; }
+    let weighted_sum: u32 = digits[..9].iter()
+        .enumerate()
+        .map(|(i, &d)| d * (10 - i as u32))
+        .sum();
+    let remainder = weighted_sum % 11;
+    let check = if remainder == 0 { 0 } else { 11 - remainder };
+    check != 10 && check == digits[9]
+}
+```
+
+The mask gate ensures this function never fires on phone numbers, postcodes, or other 10-digit values in columns that are not plausibly NHS numbers. A field-name hint (`field_name.contains("nhs")` or `field_name.contains("patient")`) could narrow it further.
+
+### Example: IBAN Detection (Financial Services)
+
+An IBAN starts with a two-letter country code, followed by two check digits, followed by a country-specific Basic Bank Account Number (BBAN). The HU mask for a GB IBAN looks like `AA99AAAA99999999999999` — 22 characters, letters then digits. The mask gate targets this family of patterns:
+
+```rust
+// Gate: hu starts with "AA99" and length matches known IBAN lengths
+pub fn is_valid_iban(value: &str) -> bool {
+    let clean: String = value.chars().filter(|c| !c.is_whitespace()).collect();
+    if clean.len() < 15 || clean.len() > 34 { return false; }
+    // Move first 4 chars to end, convert letters to digits (A=10..Z=35)
+    let rearranged = format!("{}{}", &clean[4..], &clean[..4]);
+    let numeric: String = rearranged.chars().map(|c| {
+        if c.is_alphabetic() {
+            format!("{}", c.to_ascii_uppercase() as u32 - 55)
+        } else {
+            c.to_string()
+        }
+    }).collect();
+    // Modulus 97 check
+    numeric.chars().fold(0u64, |acc, c| {
+        (acc * 10 + c.to_digit(10).unwrap() as u64) % 97
+    }) == 1
+}
+```
+
+The output might include both validation and decomposition:
+
+```json
+{
+  "is_iban": true,
+  "iban_country": "GB",
+  "iban_bban": "NWBK60161331926819"
+}
+```
+
+### Example: Email Address Detection
+
+The email rule shown in the "Implementing a New Rule" section above is another example of the pattern. The mask gate (`lu.contains("@") && lu.contains(".")`) is structural, the validation is semantic, and the extraction (`email_domain`) provides a useful standardisation suggestion. Together, these three examples — healthcare, financial services, and general-purpose — illustrate how the same mask-gate-then-validate pattern extends to any domain.

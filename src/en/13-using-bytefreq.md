@@ -177,23 +177,46 @@ becomes a column named `customer.address.postcode` with value `SW1A 1AA`.
 
 ### Controlling nesting depth
 
-For deeply nested JSON, the `-p` flag controls how many levels of nesting bytefreq will traverse:
+For deeply nested JSON, the `-p` flag controls how many levels of nesting bytefreq will traverse. Consider this input:
 
-```bash
-cat data.ndjson | bytefreq -f json -p 3
+```json
+{"org": {"dept": {"team": {"lead": {"name": "Alice"}}}}}
 ```
 
-This limits flattening to three levels deep, which can be useful for very complex JSON structures where the full path depth produces an unmanageable number of columns.
+With the default depth (`-p 9`), this produces a column named `org.dept.team.lead.name`. Limiting the depth changes what bytefreq sees:
+
+```bash
+# Full depth — profiles org.dept.team.lead.name
+cat data.ndjson | bytefreq -f json
+
+# Depth 3 — profiles org.dept.team (stops here, treats remaining nesting as a value)
+cat data.ndjson | bytefreq -f json -p 3
+
+# Depth 1 — profiles org (the entire nested object as a single JSON string)
+cat data.ndjson | bytefreq -f json -p 1
+```
+
+Limiting depth is useful for very complex JSON structures where the full path depth produces an unmanageable number of columns. Start shallow and increase depth as needed.
 
 ### Collapsing array indices
 
-JSON arrays produce paths like `items.0.name`, `items.1.name`, `items.2.name`. The `-a` flag collapses the array index, treating all array elements as the same column:
+JSON arrays produce indexed paths by default. Given this input:
+
+```json
+{"items": [{"name": "Widget"}, {"name": "Gadget"}, {"name": "Doohickey"}]}
+```
+
+bytefreq generates separate columns: `items.0.name`, `items.1.name`, `items.2.name`. The `-a` flag collapses the array index, treating all array elements as the same column:
 
 ```bash
+# Without -a: items.0.name, items.1.name, items.2.name (3 separate columns)
+cat data.ndjson | bytefreq -f json
+
+# With -a: items.name (1 column, all array elements pooled together)
 cat data.ndjson | bytefreq -f json -a true
 ```
 
-This produces `items.name` instead of separate columns per array position, which is usually what you want for profiling the structural patterns within array elements.
+This produces `items.name` instead of separate columns per array position, which is usually what you want for profiling the structural patterns within array elements. The collapsed column's mask frequency table then reflects the patterns across *all* array elements, not just those at a specific index.
 
 ## Enhanced Output
 

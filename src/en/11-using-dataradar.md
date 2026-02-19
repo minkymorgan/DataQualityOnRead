@@ -194,3 +194,5 @@ A typical DataRadar session follows the two-pass workflow described in Chapter 6
 5. **Load the export** into your analytical tool of choice (Pandas, DuckDB, Excel) and proceed with your analysis, using the mask and Rules columns to guide quality decisions.
 
 The entire process — from opening the browser to having a flat enhanced export loaded in a notebook — typically takes less than five minutes. No installation, no configuration, no data leaving your machine.
+
+For larger datasets — anything beyond roughly 50,000 rows — the browser's memory constraints become the limiting factor. If you hit this ceiling, switch to bytefreq on the command line (see Chapter 13), which handles millions of rows with the same profiling engine and the same output format. DataRadar is for exploration and quick checks; bytefreq is for scale.

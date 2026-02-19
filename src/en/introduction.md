@@ -1,6 +1,6 @@
 # Introduction
 
-In 2007, while working on a data migration for a financial services client, we received a file that was described as containing customer addresses. The specification said the fields were fixed-width, ASCII-encoded, with UK postcodes in column 47. When we loaded the file and profiled it, we discovered that column 47 contained a mixture of valid postcodes, phone numbers, the string "N/A" repeated eleven thousand times, and — in one memorable case — what appeared to be someone's lunch order.
+In 2007, while working on a data migration for a financial services client, we received a file that was described as containing customer addresses. The specification said the fields were fixed-width, ASCII-encoded, with UK postcodes in column 47. When we loaded the file and profiled it, we discovered that column 47 contained a mixture of valid postcodes, phone numbers, the string "N/A" repeated 11,000 times, and — in one memorable case — what appeared to be someone's lunch order.
 
 The specification was wrong. Or rather, the specification described what the data *should* look like, and the file contained what the data *actually* looked like. These are not the same thing, and the gap between them is where data quality lives.
 
@@ -25,5 +25,29 @@ The stakes are high. "Single view of citizen" systems help governments deliver b
 The 33 languages in DataRadar's first tier of localisation — from English and French to Amharic, Hausa, Swahili, Tamil, Nepali, and Chinese — cover approximately 5.5 billion citizens. Data quality tools have historically supported only English interfaces and Latin-script datasets. A civil servant in Addis Ababa profiling census data in Amharic, or a local government analyst in Lagos working with Hausa-language records, had no tools built for them. DataRadar and bytefreq are.
 
 All citizens deserve effective government services, and data quality is a prerequisite for delivering them. Multilingual, privacy-first, zero-install tools that work across scripts, languages, and borders — that is the ambition.
+
+## From Files to Services
+
+The techniques in this book can profile a single file in seconds. But the real prize is bigger than files.
+
+Consider a government department that receives data from dozens of external collectors — local councils, NHS trusts, schools, partner agencies — and publishes onward to downstream consumers. How does a Chief Data Officer know whether the department is producing good quality data? How does a CTO assure the service, not just individual datasets?
+
+The answer is to treat data quality profiling as **infrastructure**, not as a one-off activity. The building blocks described in this book — mask-based profiling, the flat enhanced format, population analysis, assertion rules — are designed to assemble into a monitoring architecture that can assure an entire data service.
+
+The pattern has two sides.
+
+**Exit checks** run at the point of production. Before a department publishes a data feed, the profiling engine runs against the output and generates a quality report — mask distributions, population rates, character encoding composition, assertion rule results. This report is stored as a timestamped fact record. Over weeks and months, a timeseries builds up: a continuous measurement of what the department is actually shipping.
+
+**Entrance checks** run at the point of consumption. When a downstream system receives a data feed, the same profiling engine runs against the input. The entrance report is compared against the expected baseline (derived from the exit checks or from an agreed specification). Deviations are flagged. New masks appearing, population rates dropping, encoding shifts — all are detected automatically, before the data enters the consumer's pipeline.
+
+Between these two checkpoints, something powerful emerges: **line of sight**. When a downstream system encounters a quality issue, the entrance check report traces it back to the feed. The feed's exit check report traces it back to the collector. The timeseries shows when the problem started. Connected to lineage tools that track data flow across systems, this creates an automated root cause analysis — not "something is wrong somewhere" but "this specific field in this specific feed from this specific collector started producing a new mask pattern on this date, and the downstream impact is quantifiable."
+
+That quantification matters. When you can say "Department X's data collection issues caused 2,000 downstream failures last quarter, costing an estimated £Y million in rework, delayed decisions, and incorrect outputs," the conversation changes. Quality stops being an abstract concern and becomes a line item. The timeseries is the measuring stick that makes consistent performance conversations possible — not blame, but evidence.
+
+This reframes the purpose of data quality. The traditional question is: "Is this data fit for purpose?" — meaning, can the immediate consumer use it? The better question is: **"Is this data fit for the journey?"** Data rarely has one consumer. A dataset collected by a local council may pass through a regional aggregator, a central government platform, a statistical publication pipeline, and a public API before reaching its final consumers. Quality at the point of collection is not enough if the data degrades, is misinterpreted, or hits structural incompatibilities at any stage of that journey. Fit for the journey means the data carries enough structural metadata — masks, population profiles, assertion results — to be understood and validated at every stage, by every hand it passes through.
+
+The profiling reports described in this book — both the DQ mask frequency tables and the CP character profiling reports — are the raw telemetry for this monitoring architecture. They are structured, machine-readable, and designed to be stored and queried as fact tables. The technical implementation — time-partitioned directories, DuckDB queries, KPI dashboards — is covered in the Quality Monitoring chapter in Part III.
+
+The tools in Part III are the building blocks. The architecture they enable is a data quality assurance service: continuous, measurable, and accountable.
 
 Let's begin.

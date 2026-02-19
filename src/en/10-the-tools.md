@@ -12,7 +12,7 @@ The browser tool supports the full DQOR workflow: mask-based profiling at multip
 
 A typical use case: a council data analyst receives a GeoJSON feed of planning applications from a government portal. They paste the URL into DataRadar, the tool fetches and profiles the data, and within seconds they can see the structural patterns in each field — including fields with epoch timestamps that the tool has automatically detected and offered to convert to human-readable datetimes. They export the flat enhanced output, load it into Excel or a notebook, and proceed with their analysis using whichever columns they need: raw values for verification, masks for quality assessment, suggested treatments for convenience.
 
-DataRadar is free and available at [dataradar.co.uk](https://dataradar.co.uk). It handles datasets up to approximately 50,000 rows comfortably, depending on the browser and the machine.
+DataRadar is free and available at [dataradar.co.uk](https://dataradar.co.uk). It handles datasets up to approximately 50,000 rows comfortably, depending on the browser and the machine. For anything larger, bytefreq (described below and in detail in Chapter 13) provides the same profiling engine without the browser's memory constraints.
 
 ## bytefreq: The Command-Line Profiler
 
@@ -73,7 +73,7 @@ For organisations working with billions of rows, neither a browser tool nor a si
 
 ### Why It Parallelises Cleanly
 
-The mask function is a stateless per-value transformation: it takes a string in and produces a mask out, with no dependencies on other values, other rows, or other columns. This makes it embarrassingly parallel — the same property that makes `map()` operations fast in Spark, Flink, Polars, and DuckDB. The assertion rules are equally independent: each rule examines a single (field_name, raw, HU, LU) tuple and produces a result with no side effects. The flat enhanced output is a wide table that maps naturally to columnar storage formats like Parquet and Delta Lake.
+The mask function is a stateless per-value transformation: it takes a string in and produces a mask out, with no dependencies on other values, other rows, or other columns. This makes it embarrassingly parallel — the same property that makes `map()` operations fast in Spark, Flink, Polars, and DuckDB. The assertion rules are equally independent: each rule examines a single (field_name, raw, HU, LU) tuple and produces a result with no side effects. The flat enhanced output is a wide table that maps naturally to columnar storage formats like Parquet, Delta Lake, and Apache Iceberg — the same lakehouse formats that carry the Hadoop-era denormalisation pattern (as described in Chapter 9) into modern cloud architectures.
 
 ### Practical Scaling Options
 
