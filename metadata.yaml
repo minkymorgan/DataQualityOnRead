@@ -1,0 +1,13 @@
+---
+title: "Data Quality on Read"
+subtitle: "A Practical Guide to Mask-Based Data Profiling"
+author: "Andrew Morgan"
+date: "2026"
+lang: en-GB
+rights: "© 2026 Andrew Morgan. All rights reserved."
+description: >
+  A practical guide to mask-based data profiling with bytefreq and DataRadar.
+  Covers the DQOR architecture, character class masking, population analysis,
+  treatment functions, and the flat enhanced format for data quality at any scale.
+publisher: "Andrew Morgan"
+---

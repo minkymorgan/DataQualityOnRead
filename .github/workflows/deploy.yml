@@ -1,4 +1,4 @@
-name: Deploy mdBook to GitHub Pages
+name: Build & Deploy Book
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -19,16 +19,92 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
           mdbook-version: '0.4.44'
-      - name: Build
+
+      - name: Build HTML
         run: mdbook build
-      - name: Upload artifact
+
+      - name: Install Pandoc & LaTeX
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq pandoc texlive-xetex texlive-fonts-recommended texlive-fonts-extra lmodern librsvg2-bin
+
+      - name: Prepare combined markdown
+        run: |
+          cd src
+          # Build ordered file list from SUMMARY.md links
+          grep -oP '\(\.\/\K[^)]+' SUMMARY.md > /tmp/chapter_order.txt
+          # Concatenate all chapters with page breaks
+          > /tmp/book.md
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              cat "$file" >> /tmp/book.md
+              printf '\n\n\\newpage\n\n' >> /tmp/book.md
+            fi
+          done < /tmp/chapter_order.txt
+
+      - name: Build PDF
+        run: |
+          pandoc /tmp/book.md \
+            -o docs/DataQualityOnRead.pdf \
+            --pdf-engine=xelatex \
+            -V geometry:margin=1in \
+            -V fontsize=11pt \
+            -V mainfont="DejaVu Serif" \
+            -V sansfont="DejaVu Sans" \
+            -V monofont="DejaVu Sans Mono" \
+            -V title="Data Quality on Read" \
+            -V author="Andrew Morgan" \
+            -V date="2026" \
+            -V documentclass=report \
+            -V colorlinks=true \
+            -V linkcolor=blue \
+            -V urlcolor=blue \
+            -V toc=true \
+            -V toc-depth=2 \
+            --number-sections \
+            --top-level-division=chapter \
+            -f markdown+smart
+
+      - name: Build EPUB
+        run: |
+          pandoc /tmp/book.md \
+            -o docs/DataQualityOnRead.epub \
+            -V title="Data Quality on Read" \
+            -V author="Andrew Morgan" \
+            -V date="2026" \
+            --toc \
+            --toc-depth=2 \
+            --number-sections \
+            --top-level-division=chapter \
+            --epub-title-page=true \
+            -f markdown+smart
+
+      - name: Build MOBI (Kindle) from EPUB
+        run: |
+          # Install Calibre for ebook-convert
+          sudo apt-get install -y -qq calibre
+          ebook-convert docs/DataQualityOnRead.epub docs/DataQualityOnRead.mobi \
+            --output-profile kindle \
+            --no-inline-toc 2>&1 | tail -5
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
+
+      - name: Upload book artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: book-formats
+          path: |
+            docs/DataQualityOnRead.pdf
+            docs/DataQualityOnRead.epub
+            docs/DataQualityOnRead.mobi
 
   deploy:
     environment:
