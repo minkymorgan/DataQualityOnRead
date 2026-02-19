@@ -130,6 +130,20 @@ SELECT
 FROM read_ndjson_auto('output.ndjson');
 ```
 
+The real trick comes at scale. In practice, you pool hundreds of small enhanced output files into a single directory — one per source file, one per batch, one per day — and use DuckDB's file glob to query across all of them in one shot:
+
+```sql
+SELECT
+    "postcode.raw" AS postcode,
+    "postcode.HU" AS mask,
+    "postcode.Rules"->>'is_uk_postcode' AS is_valid,
+    filename
+FROM read_ndjson_auto('exports/*.ndjson', filename=true)
+WHERE "postcode.Rules"->>'is_uk_postcode' = 'false';
+```
+
+This is the pattern that makes mask-based profiling operational. You do not need to merge files, build a database, or maintain an ingestion pipeline. You just drop enhanced exports into a directory and query the lot. DuckDB handles the file glob, schema unification, and columnar scanning — and because the flat enhanced format is regular NDJSON with consistent column names, it all just works. A directory of exports becomes a queryable quality lake with zero infrastructure.
+
 ## Working With JSON and API Data
 
 One of DataRadar's distinguishing features is its ability to profile JSON data directly, including data fetched from API endpoints. This is particularly useful for open data projects where the data arrives as GeoJSON, REST API responses, or NDJSON feeds.
