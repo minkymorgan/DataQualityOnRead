@@ -25,4 +25,5 @@
 - [The Assertion Rules Engine: Inside bytefreq](./12-assertion-rules-engine.md)
 
 [Conclusion](./conclusion.md)
+[Glossary](./glossary.md)
 [About the Author](./about.md)
