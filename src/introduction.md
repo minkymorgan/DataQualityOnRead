@@ -16,4 +16,14 @@ The book is structured in three parts. Part I sets out the problem: why data qua
 
 The intended audience is anyone who works with data they did not create: data engineers, analysts, scientists, and the growing number of people who find themselves responsible for data quality without having chosen it as a career. The technique is simple enough to prototype in a single line of `sed`, and powerful enough to run in production at enterprise scale. We will cover the full range.
 
+## Data Quality Without Borders
+
+The world's largest generators and consumers of data are in the public sector. Central, regional, and local governments manage millions of data transfers across ministerial boundaries every day. This separation of concerns makes government the single largest environment where Data Quality on Read is most urgently needed.
+
+The stakes are high. "Single view of citizen" systems help governments deliver better services and ensure people do not fall between the cracks. But building these views requires integrating data from systems that were never designed to talk to each other, encoded in formats nobody fully documented. And because the data is personally identifiable, access to view raw records is rightly restricted — making data quality work uniquely difficult. You need to understand structure and quality without seeing content. This is where mask-based profiling shines: a mask reveals the shape of the data without exposing whose data it is.
+
+The 33 languages in DataRadar's first tier of localisation — from English and French to Amharic, Hausa, Swahili, Tamil, Nepali, and Chinese — cover approximately 5.5 billion citizens. Data quality tools have historically supported only English interfaces and Latin-script datasets. A civil servant in Addis Ababa profiling census data in Amharic, or a local government analyst in Lagos working with Hausa-language records, had no tools built for them. DataRadar and bytefreq are.
+
+All citizens deserve effective government services, and data quality is a prerequisite for delivering them. Multilingual, privacy-first, zero-install tools that work across scripts, languages, and borders — that is the ambition.
+
 Let's begin.
