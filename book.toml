@@ -19,3 +19,4 @@ preferred-dark-theme = "ayu"
 git-repository-url = "https://github.com/minkymorgan/DataQualityOnRead"
 edit-url-template = "https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/{path}"
 site-url = "/DataQualityOnRead/"
+additional-css = ["custom.css"]

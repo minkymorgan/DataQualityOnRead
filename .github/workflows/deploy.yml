@@ -61,6 +61,7 @@ jobs:
             -V title="Data Quality on Read" \
             -V author="Andrew Morgan" \
             -V date="2026" \
+            -V rights="© 2026 Andrew Morgan. CC BY 4.0" \
             -V documentclass=report \
             -V colorlinks=true \
             -V linkcolor=blue \
@@ -78,6 +79,7 @@ jobs:
             -V title="Data Quality on Read" \
             -V author="Andrew Morgan" \
             -V date="2026" \
+            -V rights="© 2026 Andrew Morgan. CC BY 4.0" \
             --toc \
             --toc-depth=2 \
             --number-sections \

@@ -1,6 +1,7 @@
 # Summary
 
 [Introduction](./introduction.md)
+[Copyright](./copyright.md)
 
 # Part I — The Problem
 
