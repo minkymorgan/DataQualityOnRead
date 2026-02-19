@@ -42,7 +42,7 @@ Good treatment functions share several properties:
 
 ## Data Quality Remediation Rules at Scale
 
-In enterprise data platforms, treatment functions are not ad hoc scripts but managed assets. They are proposed by data quality analysts, agreed with data stewards and source system owners, tested, released through change management processes, and monitored in production. The remediation rules engine — of which DQPRE (the Spark-based implementation) is one example — automates the application of these rules at scale, logging every treatment applied, and producing audit reports that demonstrate the value created by the remediation pipelines.
+In enterprise data platforms, treatment functions are not ad hoc scripts but managed assets. They are proposed by data quality analysts, agreed with data stewards and source system owners, tested, released through change management processes, and monitored in production. A remediation rules engine automates the application of these rules at scale, logging every treatment applied, and producing audit reports that demonstrate the value created by the remediation pipelines.
 
 This level of process rigour is essential in environments where data remediation has compliance implications. Automated data remediation can only be applied where clear data quality checks have tagged the data appropriately, and where the remediation solutions have been agreed with stakeholders. The mask-based approach supports this by construction: the mask is the tag, the allow list/exclusion list is the check, and the treatment function is the agreed remediation.
 
