@@ -1,0 +1,17 @@
+[book]
+authors = ["Andrew Morgan"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Data Quality on Read"
+description = "A practical guide to mask-based data profiling with bytefreq and dataradar"
+
+[build]
+build-dir = "docs"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "ayu"
+git-repository-url = "https://github.com/minkymorgan/DataQualityOnRead"
+edit-url-template = "https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/{path}"
+site-url = "/DataQualityOnRead/"
