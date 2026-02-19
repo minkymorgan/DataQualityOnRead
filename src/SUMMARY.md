@@ -4,25 +4,22 @@
 
 # Part I — The Problem
 
-- [Why Data Quality Matters](./01-why-data-quality-matters.md)
-- [Traditional Approaches and Their Limits](./02-traditional-approaches.md)
+- [Why Data Quality Still Breaks Things](./01-why-data-quality-still-breaks-things.md)
+- [The Limits of Traditional Approaches](./02-the-limits-of-traditional-approaches.md)
 
 # Part II — Data Quality on Read
 
-- [The Mask-Based Profiling Idea](./03-mask-based-profiling.md)
-- [Character Class Translation](./04-character-class-translation.md)
-- [Low Grain and High Grain Masks](./05-low-and-high-grain.md)
+- [Schema on Read, Quality on Read](./03-schema-on-read-quality-on-read.md)
+- [Mask-Based Profiling](./04-mask-based-profiling.md)
+- [Grain, Scripts, and Character Classes](./05-grain-scripts-and-character-classes.md)
 - [Population Analysis](./06-population-analysis.md)
+- [Masks as Error Codes](./07-masks-as-error-codes.md)
+- [Treatment Functions and the Quality Loop](./08-treatment-functions.md)
 
-# Part III — Tools
+# Part III — The Architecture
 
-- [bytefreq: The CLI](./07-bytefreq-cli.md)
-- [dataradar: Configuration-Driven Profiling](./08-dataradar.md)
-
-# Part IV — Putting It Together
-
-- [Masks as Error Codes](./09-masks-as-error-codes.md)
-- [Treatment Functions and Remediation](./10-treatment-functions.md)
+- [The Flat Enhanced Format: A Feature Store for Data Quality](./09-flat-enhanced-format.md)
+- [The Tools: DataRadar, bytefreq, and DQPRE](./10-the-tools.md)
 
 [Conclusion](./conclusion.md)
 [About the Author](./about.md)

@@ -1,26 +1,13 @@
 # Conclusion
 
-<!-- TODO: Refine with Andrew's voice -->
+Mask-based profiling is not a silver bullet. It will not catch semantic errors — a phone number that is structurally valid but belongs to the wrong person, a date that is correctly formatted but factually wrong, a numeric value that parses fine but represents a measurement in the wrong units. It will not replace domain expertise, business validation rules, or statistical anomaly detection. Those techniques have their place, and they should continue to be used where they are appropriate.
 
-Mask-based profiling is not a silver bullet. It won't catch semantic errors (a valid-looking phone number that belongs to the wrong person), and it won't replace domain expertise. But as a **first pass** — a cheap, fast, assumption-free structural analysis — it's remarkably powerful.
+What mask-based profiling does, and does exceptionally well, is provide a **fast, assumption-free structural census** of any dataset at the point of consumption. It answers the question "what does this data actually look like?" before you invest time and resources in trying to use it. It generates quality metadata — masks, population profiles, error codes — as a side effect of profiling, at no additional cost. And it does so deterministically, reproducibly, and at any scale from a single CSV in a browser to billions of records on a Spark cluster.
 
-## Key Takeaways
+The Data Quality on Read architecture that surrounds the technique — raw data preservation, deferred quality processing, the flat enhanced format, treatment functions keyed by mask — is designed for the reality of modern data work, where the data you need to use was created by someone else, documented imperfectly, and delivered with whatever level of quality the source system happened to produce. You cannot control the source. What you can control is how quickly and cheaply you understand what you have received, and how systematically you address the issues you find.
 
-1. **Profile on read, not just on write.** You can't always control the source.
-2. **Masks reveal structure** that statistics miss. A mean and standard deviation won't show you that 2% of your "dates" are actually names.
-3. **Low grain first, high grain second.** Start broad, drill down.
-4. **Masks are error codes for free.** The profiler generates diagnostics as a side effect of profiling.
-5. **Treatment follows detection.** Map masks to remediation actions for a complete quality pipeline.
-6. **Iterate.** Data quality is a loop, not a project.
+The tools are open source. The technique is simple enough to prototype in a single line of `sed` and powerful enough to run in production at government scale. The hardest part, as with most things in data engineering, is not the technology but the discipline: profiling consistently, documenting what you find, building the quality loop, and maintaining it over time.
 
-## Where to Go Next
+If there is a single lesson from nearly two decades of applying this technique across financial services, telecoms, government, and open data projects, it is this: the data is never as clean as the specification says it is, the specification is never as accurate as the author believes it is, and the cost of discovering these facts late is always higher than the cost of discovering them early.
 
-- Try **bytefreq** on your own data — even one file will be illuminating
-- Set up **dataradar** for your most critical data feeds
-- Build a mask whitelist for your key columns
-- Integrate profiling into your CI/CD or ETL pipeline
-- Share your findings — data quality is everyone's problem
-
-The tools are open source. The technique is simple. The hardest part is starting.
-
-Start.
+Profile early. Profile often. Let the masks speak for themselves.
