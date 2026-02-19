@@ -35,7 +35,7 @@ jobs:
 
       - name: Prepare combined markdown
         run: |
-          cd src
+          cd src/en
           # Build ordered file list from SUMMARY.md links
           grep -oP '\(\.\/\K[^)]+' SUMMARY.md > /tmp/chapter_order.txt
           # Concatenate all chapters with page breaks
