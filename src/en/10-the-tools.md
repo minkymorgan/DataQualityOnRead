@@ -123,7 +123,7 @@ The profiling philosophy, the mask functions, and the flat enhanced output forma
 
 ### Enterprise Support
 
-For organisations that need help implementing DQOR at scale, we offer commercial consulting and support through Zenkai Laboratories. This includes bespoke implementations built on our fork of the [Data Quality Profiler and Rules Engine](https://github.com/UKHomeOffice/data-quality-profiler-and-rules-engine), an open-source Spark-based tool proven at enterprise scale. Contact [andrew@gamakon.ai](mailto:andrew@gamakon.ai) for details.
+For organisations that need help implementing DQOR at scale, we offer commercial consulting and support through Gamakon. This includes bespoke implementations built on our fork of the [Data Quality Profiler and Rules Engine](https://github.com/UKHomeOffice/data-quality-profiler-and-rules-engine), an open-source Spark-based tool proven at enterprise scale. Contact [andrew@gamakon.ai](mailto:andrew@gamakon.ai) for details.
 
 ## Choosing the Right Tool
 
