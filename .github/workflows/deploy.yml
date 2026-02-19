@@ -31,7 +31,7 @@ jobs:
       - name: Install Pandoc & LaTeX
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq pandoc texlive-xetex texlive-fonts-recommended texlive-fonts-extra lmodern librsvg2-bin
+          sudo apt-get install -y -qq pandoc texlive-xetex texlive-fonts-recommended texlive-fonts-extra lmodern librsvg2-bin fonts-noto-cjk fonts-noto-color-emoji
 
       - name: Prepare combined markdown
         run: |
@@ -57,6 +57,7 @@ jobs:
             -V mainfont="DejaVu Serif" \
             -V sansfont="DejaVu Sans" \
             -V monofont="DejaVu Sans Mono" \
+            -V CJKmainfont="Noto Sans CJK SC" \
             -V title="Data Quality on Read" \
             -V author="Andrew Morgan" \
             -V date="2026" \

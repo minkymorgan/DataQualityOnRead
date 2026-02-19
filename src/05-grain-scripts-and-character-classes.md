@@ -35,7 +35,7 @@ Under Unicode-aware masking, the character class translation uses the Unicode Ge
 - **Symbol categories** (Sc, Sk, Sm, So) → kept as-is
 - **Separator categories** (Zs, Zl, Zp) → kept as-is
 
-This means that a Chinese business name like `天安門広場` produces a mask of `aaaaa` (five Lo characters, each mapped to `a`), an Arabic address produces `a a a` preserving the spaces between words, and an Icelandic name like `Jökulsárlón` produces `Aaaaaaaaaa` — preserving the capitalisation structure even though the accented characters are outside the basic ASCII range.
+This means that a Chinese place name like 北京饭店 (Beijing Hotel) produces a mask of `aaaa` (four Lo characters, each mapped to `a`), an Arabic address produces `a a a` preserving the spaces between words, and an Icelandic name like Jökulsárlón produces `Aaaaaaaaaa` — preserving the capitalisation structure even though the accented characters are outside the basic ASCII range.
 
 The practical benefit is that profiling works across scripts without configuration. When profiling a global places dataset containing names in Chinese, Thai, Arabic, Cyrillic, Devanagari, Ethiopic, and Latin scripts, the profiler does not need to be told which languages to expect. It uses the Unicode category of each character to generate masks that preserve structure, and the frequency analysis surfaces the dominant patterns regardless of script.
 
