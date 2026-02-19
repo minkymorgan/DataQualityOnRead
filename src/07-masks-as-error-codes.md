@@ -6,11 +6,11 @@ If you know what masks are "correct" for a column, then every other mask is an e
 
 This thinking leads to the following conclusion: we can create a general framework around mask-based profiling for doing data quality control and remediation *as we read data within our data reading pipeline*. This has some advantageous solution properties that are worth setting out explicitly.
 
-## Whitelists and Blacklists
+## Allow Lists and Exclusion Lists
 
-The simplest way to operationalise masks as error codes is through whitelists and blacklists.
+The simplest way to operationalise masks as error codes is through allow lists and exclusion lists.
 
-A **whitelist** defines the acceptable masks for a column. Any value whose mask does not appear in the whitelist is flagged as an anomaly. For a UK postcode column, the whitelist might contain:
+An **allow list** defines the acceptable masks for a column. Any value whose mask does not appear in the allow list is flagged as an anomaly. For a UK postcode column, the allow list might contain:
 
 ```
 A9 9AA
@@ -23,7 +23,7 @@ AA9A 9AA
 
 These six masks cover all valid UK postcode formats. Any value that produces a different mask — `aaaa` (lowercase text), `99999` (numeric), `A/A` (placeholder), or an empty string — is automatically flagged, and the mask tells you exactly what structural form the offending value takes.
 
-A **blacklist** takes the opposite approach: it defines masks that are known to be problematic, and flags any value that matches. This is useful when the set of valid formats is large or open-ended (as with free-text name fields), but certain structural patterns are reliably indicative of errors:
+An **exclusion list** takes the opposite approach: it defines masks that are known to be problematic, and flags any value that matches. This is useful when the set of valid formats is large or open-ended (as with free-text name fields), but certain structural patterns are reliably indicative of errors:
 
 ```
 9999           → numeric value in a text field
@@ -32,14 +32,14 @@ a              → single lowercase character
 aaaa://aaa.aaa → URL in a name field
 ```
 
-In practice, whitelists are more useful for format-controlled fields (postcodes, phone numbers, dates, identifiers) where the set of valid patterns is finite and known. Blacklists are more useful for free-text fields where the valid patterns are diverse but certain structural types are reliably wrong.
+In practice, allow lists are more useful for format-controlled fields (postcodes, phone numbers, dates, identifiers) where the set of valid patterns is finite and known. Exclusion lists are more useful for free-text fields where the valid patterns are diverse but certain structural types are reliably wrong.
 
 ## Building Quality Gates
 
 The combination of population analysis and mask-based error codes creates a natural quality gate for incoming data:
 
 1. **Profile the column** using mask-based profiling at the appropriate grain level.
-2. **Compare each mask against the whitelist** (or blacklist) for that column.
+2. **Compare each mask against the allow list** (or exclusion list) for that column.
 3. **Check population thresholds** — is the proportion of "good" masks above the minimum acceptable level? Has a previously rare "bad" mask suddenly increased in frequency?
 4. **Route errors by mask** — different masks may require different handling. A placeholder (`A/A`) might be replaced with a null. An all-caps name (`AAAA AAAAA`) might be normalised to title case. A numeric value in a name field (`99999`) might be quarantined for manual review.
 
@@ -49,7 +49,7 @@ This approach maps directly to the Data Quality Controls capability described in
 
 ## Masks as Provenance
 
-There is a secondary benefit to treating masks as error codes that is easy to overlook: they provide provenance for quality decisions. When a downstream consumer asks "why was this record flagged?" or "why was this value changed?", the mask provides a clear, reproducible answer. The record was flagged because its mask was `99999` and the whitelist for the name column does not include numeric masks. The value was changed because its mask was `AAAA AAAAA` and the treatment function for that mask is title-case normalisation.
+There is a secondary benefit to treating masks as error codes that is easy to overlook: they provide provenance for quality decisions. When a downstream consumer asks "why was this record flagged?" or "why was this value changed?", the mask provides a clear, reproducible answer. The record was flagged because its mask was `99999` and the allow list for the name column does not include numeric masks. The value was changed because its mask was `AAAA AAAAA` and the treatment function for that mask is title-case normalisation.
 
 This audit trail is built into the mechanism by construction. No additional logging or documentation is required — the mask is both the detection method and the explanation. In regulated environments where data lineage and transformation justification are compliance requirements, this property is particularly valuable.
 

@@ -71,7 +71,7 @@ bytefreq is open source, licensed under MIT, and available at [github.com/minkym
 
 For organisations working with billions or trillions of rows — central government departments, large financial institutions, telecoms operators — neither a browser tool nor a single-machine CLI is sufficient. **DQPRE** (Data Quality Profiler and Rules Engine) is a Scala/Spark implementation of the DQOR framework designed for distributed processing at enterprise scale.
 
-DQPRE implements the full profiling, assertion, and remediation pipeline as a Spark application. It includes a configurable rules engine that allows data quality teams to define whitelists, blacklists, and treatment functions as configuration rather than code, and it produces the flat enhanced output as Spark DataFrames that can be written to Parquet, Delta Lake, or any other Spark-compatible storage format.
+DQPRE implements the full profiling, assertion, and remediation pipeline as a Spark application. It includes a configurable rules engine that allows data quality teams to define allow lists, exclusion lists, and treatment functions as configuration rather than code, and it produces the flat enhanced output as Spark DataFrames that can be written to Parquet, Delta Lake, or any other Spark-compatible storage format.
 
 DQPRE was developed for and proven at the scale of UK central government, where it runs in production across datasets measured in billions of records. It is now open-sourced and available at [github.com/UKHomeOffice/data-quality-profiler-and-rules-engine](https://github.com/UKHomeOffice/data-quality-profiler-and-rules-engine).
 

@@ -44,18 +44,18 @@ Good treatment functions share several properties:
 
 In enterprise data platforms, treatment functions are not ad hoc scripts but managed assets. They are proposed by data quality analysts, agreed with data stewards and source system owners, tested, released through change management processes, and monitored in production. The remediation rules engine — of which DQPRE (the Spark-based implementation) is one example — automates the application of these rules at scale, logging every treatment applied, and producing audit reports that demonstrate the value created by the remediation pipelines.
 
-This level of process rigour is essential in environments where data remediation has compliance implications. Automated data remediation can only be applied where clear data quality checks have tagged the data appropriately, and where the remediation solutions have been agreed with stakeholders. The mask-based approach supports this by construction: the mask is the tag, the whitelist/blacklist is the check, and the treatment function is the agreed remediation.
+This level of process rigour is essential in environments where data remediation has compliance implications. Automated data remediation can only be applied where clear data quality checks have tagged the data appropriately, and where the remediation solutions have been agreed with stakeholders. The mask-based approach supports this by construction: the mask is the tag, the allow list/exclusion list is the check, and the treatment function is the agreed remediation.
 
 ## The Quality Loop
 
-Over time, as treatment functions are applied and their results monitored, the long tail of error masks shrinks. Known errors are corrected automatically; new patterns are detected, investigated, and either added to the whitelist (if they turn out to be legitimate) or assigned new treatment functions (if they represent a new class of error).
+Over time, as treatment functions are applied and their results monitored, the long tail of error masks shrinks. Known errors are corrected automatically; new patterns are detected, investigated, and either added to the allow list (if they turn out to be legitimate) or assigned new treatment functions (if they represent a new class of error).
 
 This creates a **continuous improvement loop**:
 
 1. **Profile** — discover new masks in incoming data.
-2. **Classify** — determine whether each mask is expected (whitelist), an error (blacklist), or unknown (investigate).
+2. **Classify** — determine whether each mask is expected (allow list), an error (exclusion list), or unknown (investigate).
 3. **Treat** — write or update treatment functions for error masks.
 4. **Monitor** — track the effectiveness of treatments and watch for new patterns.
-5. **Refine** — adjust whitelists, blacklists, and treatment functions based on operational experience.
+5. **Refine** — adjust allow lists, exclusion lists, and treatment functions based on operational experience.
 
 Each iteration through this loop improves the quality of the downstream data products. The loop does not require a large upfront investment in rules definition — you start with whatever you can profile on day one, and build incrementally as you learn the data. This incremental approach is well suited to the reality of data quality work, where perfect knowledge of the data is never available at the start and understanding improves over time through operational experience.
