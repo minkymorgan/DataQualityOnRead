@@ -1,4 +1,4 @@
-# Glossary
+# Glossary {.unnumbered}
 
 This glossary defines the key technical terms used throughout this book. In translated editions, these terms are kept in English to maintain consistency with the tools and code examples. The definitions below serve as the reference for all translations.
 

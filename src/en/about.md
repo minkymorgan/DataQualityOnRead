@@ -1,4 +1,4 @@
-# About the Author
+# About the Author {.unnumbered}
 
 **Andrew Morgan** is a data engineer, architect, and consultant with nearly two decades of experience building data platforms and data quality tools across financial services, government, and telecoms.
 

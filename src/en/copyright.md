@@ -1,4 +1,4 @@
-# Copyright
+# Copyright {.unnumbered}
 
 **Data Quality on Read: A Practical Guide to Mask-Based Data Profiling**
 
@@ -19,10 +19,10 @@ Full license text: [creativecommons.org/licenses/by/4.0](https://creativecommons
 
 ---
 
-**Author:** Andrew Morgan
-**Publisher:** Andrew Morgan
+**Author:** Andrew Morgan\
+**Publisher:** Andrew Morgan\
 **First edition:** 2026
 
-**Tools:** [dataradar.co.uk](https://dataradar.co.uk) · [github.com/minkymorgan/bytefreq](https://github.com/minkymorgan/bytefreq)
-**Source:** [github.com/minkymorgan/DataQualityOnRead](https://github.com/minkymorgan/DataQualityOnRead)
+**Tools:** [dataradar.co.uk](https://dataradar.co.uk) · [github.com/minkymorgan/bytefreq](https://github.com/minkymorgan/bytefreq)\
+**Source:** [github.com/minkymorgan/DataQualityOnRead](https://github.com/minkymorgan/DataQualityOnRead)\
 **Contact:** [andrew@gamakon.ai](mailto:andrew@gamakon.ai)

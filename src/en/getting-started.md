@@ -1,4 +1,4 @@
-# Getting Started
+# Getting Started {.unnumbered}
 
 You have read the book. Now try the technique. Here is the shortest path from zero to a working profile.
 

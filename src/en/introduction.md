@@ -1,4 +1,4 @@
-# Introduction
+# Introduction {.unnumbered}
 
 In 2007, while working on a data migration for a financial services client, we received a file that was described as containing customer addresses. The specification said the fields were fixed-width, ASCII-encoded, with UK postcodes in column 47. When we loaded the file and profiled it, we discovered that column 47 contained a mixture of valid postcodes, phone numbers, the string "N/A" repeated 11,000 times, and — in one memorable case — what appeared to be someone's lunch order.
 

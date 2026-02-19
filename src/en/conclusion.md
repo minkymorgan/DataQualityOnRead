@@ -1,4 +1,4 @@
-# Conclusion
+# Conclusion {.unnumbered}
 
 Mask-based profiling is not a silver bullet. It will not catch semantic errors — a phone number that is structurally valid but belongs to the wrong person, a date that is correctly formatted but factually wrong, a numeric value that parses fine but represents a measurement in the wrong units. It will not replace domain expertise, business validation rules, or statistical anomaly detection. Those techniques have their place, and they should continue to be used where they are appropriate.
 
