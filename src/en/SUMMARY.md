@@ -21,6 +21,7 @@
 - [The Flat Enhanced Format: A Feature Store for Data Quality](./09-flat-enhanced-format.md)
 - [The Tools: DataRadar and bytefreq](./10-the-tools.md)
 - [Using DataRadar: A Walkthrough](./11-using-dataradar.md)
+- [Using bytefreq: Installation, Build, and CLI Reference](./13-using-bytefreq.md)
 - [The Assertion Rules Engine: Inside bytefreq](./12-assertion-rules-engine.md)
 
 [Conclusion](./conclusion.md)
