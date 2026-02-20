@@ -67,10 +67,10 @@ jobs:
             -V linkcolor=blue \
             -V urlcolor=blue \
             -V toc=true \
-            -V toc-depth=2 \
+            -V toc-depth=1 \
             --number-sections \
             --top-level-division=chapter \
-            -f markdown+smart
+            -f markdown+smart+attributes
 
       - name: Build EPUB
         run: |
@@ -81,11 +81,11 @@ jobs:
             -V date="2026" \
             -V rights="© 2026 Andrew Morgan. CC BY 4.0" \
             --toc \
-            --toc-depth=2 \
+            --toc-depth=1 \
             --number-sections \
             --top-level-division=chapter \
             --epub-title-page=true \
-            -f markdown+smart
+            -f markdown+smart+attributes
 
       - name: Build MOBI (Kindle) from EPUB
         run: |
