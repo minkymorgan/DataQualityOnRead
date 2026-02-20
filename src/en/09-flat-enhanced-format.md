@@ -2,17 +2,36 @@
 
 The preceding chapters described the techniques — masking, population analysis, error codes, treatment functions — but left open the question of how the outputs of all this profiling and treatment are actually stored and delivered to consumers. The answer is the **flat enhanced format**, and it is arguably the most important architectural decision in the entire DQOR framework.
 
-## The Hadoop Insight
+## From Nested to Flat
 
-The flat enhanced format is a trick from the Hadoop era, and it is worth understanding where it came from to appreciate why it works.
+To understand the flat enhanced format, start with what bytefreq produces in its standard enhanced mode (`-e`). For each record, every field becomes a nested JSON object containing the raw value, its masks, and any inferred rules:
 
-In traditional relational database design, the instinct is to normalise. Raw data goes in one table, quality metadata goes in another, treatment outputs go in a third, and consumers join them together at query time. This is clean, avoids redundancy, and works well when joins are cheap — which they are in a well-tuned relational database.
+```json
+{
+  "Accounts.LastMadeUpDate": {
+    "HU": "99_99_9999",
+    "LU": "9_9_9",
+    "Rules": { "std_date": "2019-09-30", "string_length": 10 },
+    "raw": "30/09/2019"
+  }
+}
+```
 
-In Hadoop, joins were not cheap. Joining two large datasets distributed across a cluster of commodity machines involved shuffling data across the network, and the cost scaled with the size of the datasets being joined. The pragmatic response was to **denormalise aggressively**: rather than storing related information in separate tables and joining at query time, you widen the row to include everything a consumer might need, accepting the redundancy in exchange for eliminating the join.
+This is rich and self-describing, but nested structures can be awkward to query in flat analytical tools (SQL engines, DataFrames, spreadsheets). The flat enhanced format (`-E`) takes this nested record and serialises it into **flattened key-value tuples**, one pair per attribute:
 
-Storage was cheap and getting cheaper. Network shuffles were expensive and getting more expensive as datasets grew. The economics were clear: denormalise, widen the table, co-locate related information in the same row. This pattern became standard practice in Hadoop-era data platforms — and persists today in Delta Lake, Iceberg, and other modern lakehouse architectures — and it underpins the design of feature stores in machine learning — where pre-computed features are stored alongside the raw data they were derived from, so that model-serving pipelines can retrieve everything they need in a single read without joining against a feature computation pipeline at request time.
+```json
+{
+  "Accounts.LastMadeUpDate.raw": "30/09/2019",
+  "Accounts.LastMadeUpDate.HU": "99_99_9999",
+  "Accounts.LastMadeUpDate.LU": "9_9_9",
+  "Accounts.LastMadeUpDate.Rules.std_date": "2019-09-30",
+  "Accounts.LastMadeUpDate.Rules.string_length": 10
+}
+```
 
-The flat enhanced format applies this same principle to data quality. Rather than storing raw data in one place and quality metadata in another, we widen every row to include the raw value, its masks, and any suggested treatments as parallel columns. The result is a single, self-contained record that carries its own quality metadata with it.
+Each record is now a self-contained set of tuples. The quality metadata travels with the data it describes — no joins, no lookups, no separate tables. Every record carries its own profiling output.
+
+This pattern originated in the Hadoop era, where the economics were clear: joins across distributed datasets were expensive (network shuffles scaled with data size), while storage was cheap and getting cheaper. Co-locating related information in the same record — rather than normalising into separate tables — eliminated the most costly operation in the pipeline. The pattern persists today in Delta Lake, Iceberg, and other lakehouse architectures, and it underpins the design of feature stores in machine learning, where pre-computed features are stored alongside the raw data so that serving pipelines can retrieve everything in a single read.
 
 ## The Column Structure
 
