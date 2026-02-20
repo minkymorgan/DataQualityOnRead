@@ -29,7 +29,15 @@ This is rich and self-describing, but nested structures can be awkward to query 
 }
 ```
 
-Each record is now a self-contained set of tuples. The quality metadata travels with the data it describes — no joins, no lookups, no separate tables. Every record carries its own profiling output.
+Each record is now a self-contained set of key-value pairs. The quality metadata travels with the data it describes — no joins, no lookups, no separate tables. Every record carries its own profiling output.
+
+This is important because key-value pairs do not assume a fixed schema. The flat enhanced format is a **flexible, floating schema** where:
+
+- **Ragged rows are handled gracefully.** If one record has twelve fields and the next has eight, each record simply carries its own set of pairs. There is no need for null-padding to fit a rigid column structure, and no schema-on-write enforcement that rejects records with unexpected shapes. Real-world data is ragged — files from different sources, different vintages, different levels of completeness — and the key-value pair format absorbs that variation without friction.
+
+- **Annotations are easily added.** Adding a new quality rule, a new treatment, or a new derived attribute is just adding another key-value pair to the record. There is no ALTER TABLE, no schema migration, no reprocessing of historical records. The format is inherently additive — new annotations appear alongside existing ones, and consumers that do not need them simply ignore keys they do not recognise.
+
+- **Field names use namespace dot notation, providing provenance and scoping.** The key `Accounts.LastMadeUpDate.Rules.std_date` is not just a column name — it is a path that tells you exactly where this value came from: the `Accounts.LastMadeUpDate` field, its `Rules` annotation layer, specifically the `std_date` rule. This dot-separated namespace convention means that the key itself carries provenance. You can programmatically group all keys under `Accounts.LastMadeUpDate.*`, or extract all `*.Rules.*` annotations across every field, or filter to just `*.raw` to recover the original data. The namespace is the schema.
 
 This pattern originated in the Hadoop era, where the economics were clear: joins across distributed datasets were expensive (network shuffles scaled with data size), while storage was cheap and getting cheaper. Co-locating related information in the same record — rather than normalising into separate tables — eliminated the most costly operation in the pipeline. The pattern persists today in Delta Lake, Iceberg, and other lakehouse architectures, and it underpins the design of feature stores in machine learning, where pre-computed features are stored alongside the raw data so that serving pipelines can retrieve everything in a single read.
 
