@@ -70,7 +70,7 @@ jobs:
             -V toc-depth=1 \
             --number-sections \
             --top-level-division=chapter \
-            -f markdown+attributes
+            -f markdown+header_attributes
 
       - name: Build EPUB
         run: |
@@ -85,7 +85,7 @@ jobs:
             --number-sections \
             --top-level-division=chapter \
             --epub-title-page=true \
-            -f markdown+attributes
+            -f markdown+header_attributes
 
       - name: Build MOBI (Kindle) from EPUB
         run: |
