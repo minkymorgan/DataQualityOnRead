@@ -17,7 +17,7 @@ To understand the flat enhanced format, start with what bytefreq produces in its
 }
 ```
 
-This is rich and self-describing, but nested structures can be awkward to query in flat analytical tools (SQL engines, DataFrames, spreadsheets). The flat enhanced format (`-E`) takes this nested record and serialises it into **flattened key-value tuples**, one pair per attribute:
+This is rich and self-describing, but nested structures can be awkward to query in flat analytical tools (SQL engines, DataFrames, spreadsheets). The flat enhanced format (`-E`) is a **flattened key-value pair schema, sourced from nested data** — one pair per attribute:
 
 ```json
 {
