@@ -2,10 +2,16 @@
 
 ## A Practical Guide to Mask-Based Data Profiling {.unnumbered}
 
-\vspace{3cm}
+&nbsp;
+
+&nbsp;
+
+&nbsp;
 
 **Andrew Morgan**
 
-\vspace{2cm}
+&nbsp;
+
+&nbsp;
 
 *First Edition — 2026*
