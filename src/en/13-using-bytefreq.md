@@ -50,13 +50,23 @@ bytefreq --version
 
 ## Input Formats
 
-bytefreq reads data from standard input (stdin) and supports two input formats:
+bytefreq supports four input formats:
 
-**Tabular** (`-f tabular`, the default) — delimited text where the first line is a header row and subsequent lines are data records. The delimiter defaults to pipe (`|`) but can be set to any character using the `-d` flag.
+**Tabular** (`-f tabular`, the default) — delimited text where the first line is a header row and subsequent lines are data records. The delimiter defaults to pipe (`|`) but can be set to any character using the `-d` flag. Tabular data is read from standard input (stdin).
 
-**JSON** (`-f json`) — newline-delimited JSON (NDJSON), where each line is a complete JSON object. bytefreq flattens nested structures using dot-notation paths (e.g., `customer.address.postcode`), handling arrays and nested objects to a configurable depth.
+**JSON** (`-f json`) — newline-delimited JSON (NDJSON), where each line is a complete JSON object. bytefreq flattens nested structures using dot-notation paths (e.g., `customer.address.postcode`), handling arrays and nested objects to a configurable depth. JSON data is read from standard input.
 
-A note on CSV: bytefreq defaults to pipe-delimited input rather than comma-delimited, because pipe characters appear far less frequently in real-world data values and thus produce fewer parsing ambiguities. If your data is comma-delimited, pass `-d ','`. For complex CSV files with quoted fields, escaped delimiters, or embedded newlines, it is worth pre-parsing with a dedicated CSV parser (Python's `csv` module, `csvkit`, or `xsv`) and piping clean pipe-delimited output to bytefreq.
+**Excel** (`-f excel --excel-path file.xlsx`) — native Excel file support for `.xlsx`, `.xls`, `.xlsb`, and `.ods` formats. Requires building with the `excel` feature flag (`cargo install --git https://github.com/minkymorgan/bytefreq --features excel`). By default, bytefreq reads the first sheet; use `--excel-sheet` to select a specific sheet by index (0-based).
+
+**Parquet** (`-f parquet --parquet-path file.parquet`) — native Apache Parquet file support. Requires building with the `parquet` feature flag (`cargo install --git https://github.com/minkymorgan/bytefreq --features parquet`). Parquet files are converted internally to JSON lines, so all JSON features — dot-notation nested paths, array index handling (`-a`), path depth limiting (`-p`), and enhanced output — work with Parquet data. Nested structs produce dot-notation paths (`user.address.city`), and list columns produce indexed array paths (`scores[0]`, `scores[1]`). Timestamps are automatically converted to ISO 8601 strings, and all standard Arrow data types are supported.
+
+To install with all optional format support:
+
+```bash
+cargo install --git https://github.com/minkymorgan/bytefreq --features parquet,excel
+```
+
+A note on CSV: bytefreq defaults to pipe-delimited input rather than comma-delimited, because pipe characters appear far less frequently in real-world data values and thus produce fewer parsing ambiguities. If your data is comma-delimited, pass `-d ','`. For complex CSV files with quoted fields, escaped delimiters, or embedded newlines, bytefreq uses a proper CSV parser that handles quoted fields and escape sequences correctly.
 
 ## Command-Line Reference
 
@@ -75,6 +85,12 @@ OPTIONS:
   -f, --format <FORMAT>        Input format [default: tabular]
                                  tabular - Delimited text with header
                                  json    - Newline-delimited JSON
+                                 excel   - Excel file (requires --excel-path)
+                                 parquet - Parquet file (requires --parquet-path)
+
+      --excel-path <PATH>      Path to Excel file (with -f excel)
+      --excel-sheet <INDEX>    Sheet index, 0-based [default: 0]
+      --parquet-path <PATH>    Path to Parquet file (with -f parquet)
 
   -r, --report <REPORT>        Report type [default: DQ]
                                  DQ - Data Quality (mask frequencies)
@@ -311,15 +327,39 @@ diff <(cat file1.csv | bytefreq -d ',') <(cat file2.csv | bytefreq -d ',')
 
 This shows which columns have gained or lost structural patterns between two versions of the same dataset — useful for detecting format drift over time.
 
-### Profile an Excel file (via csvkit)
-
-bytefreq does not read Excel files directly from the command line. Use a conversion tool first:
+### Profile an Excel file (native)
 
 ```bash
-in2csv data.xlsx | bytefreq -d ','
+bytefreq -f excel --excel-path data.xlsx
 ```
 
-(`in2csv` is part of the `csvkit` Python package. Alternatively, DataRadar handles Excel files natively in the browser.)
+To profile a specific sheet (0-based index):
+
+```bash
+bytefreq -f excel --excel-path data.xlsx --excel-sheet 2
+```
+
+(Requires building with `--features excel`. Alternatively, DataRadar handles Excel files natively in the browser.)
+
+### Profile a Parquet file
+
+```bash
+bytefreq -f parquet --parquet-path data.parquet
+```
+
+Nested structs produce dot-notation paths and list columns produce indexed array paths, just like JSON. Use `-a` to collapse array indices:
+
+```bash
+bytefreq -f parquet --parquet-path data.parquet -a
+```
+
+Generate flat enhanced output from Parquet:
+
+```bash
+bytefreq -f parquet --parquet-path data.parquet -E > enhanced.ndjson
+```
+
+(Requires building with `--features parquet`.)
 
 ## Understanding the Output
 

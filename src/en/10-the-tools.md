@@ -16,7 +16,7 @@ DataRadar is free and available at [dataradar.co.uk](https://dataradar.co.uk). I
 
 ## bytefreq: The Command-Line Profiler
 
-For larger datasets, or for integration into automated pipelines, **bytefreq** is the CLI tool. It is implemented in Rust, multi-threaded using Rayon, and handles CSV, Excel, JSON, and NDJSON formats. It is designed for Unix-style pipe workflows and can process files with millions of rows.
+For larger datasets, or for integration into automated pipelines, **bytefreq** is the CLI tool. It is implemented in Rust, multi-threaded using Rayon, and handles CSV, JSON, NDJSON, Excel (.xlsx, .xls, .xlsb, .ods), and Apache Parquet formats — including nested structs, list columns, and automatic timestamp conversion. It is designed for Unix-style pipe workflows and can process files with millions of rows.
 
 The name is historical. The original bytefreq was written in awk in 2007 as a byte-frequency profiler — a tool for counting the frequency of each byte value in a file to determine encoding, delimiters, and character distributions. Over time, it evolved to include the mask-based profiling functions described in this book. The current Rust implementation is a ground-up rewrite that retains the name and the profiling philosophy while delivering the performance needed for large-scale local processing.
 
@@ -26,8 +26,8 @@ The name is historical. The original bytefreq was written in awk in 2007 as a by
 # Install Rust if needed
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
-# Install bytefreq from GitHub
-cargo install --git https://github.com/minkymorgan/bytefreq
+# Install bytefreq from GitHub (with all format support)
+cargo install --git https://github.com/minkymorgan/bytefreq --features parquet,excel
 ```
 
 ### Basic Usage
@@ -41,6 +41,12 @@ cat data.csv | bytefreq -g LU
 
 # Profile JSON data
 cat data.json | bytefreq -f json
+
+# Profile an Excel file
+bytefreq -f excel --excel-path data.xlsx
+
+# Profile a Parquet file
+bytefreq -f parquet --parquet-path data.parquet
 
 # Character frequency profiling (encoding inspection)
 cat data.csv | bytefreq -r CP
@@ -115,7 +121,7 @@ df.withColumn("name_HU", maskUDF(col("name")))
 The tools form a natural scaling path:
 
 1. **DataRadar** (browser) — free, zero-install, up to ~50K rows. Perfect for quick checks, exploratory profiling, and environments where software installation is not possible.
-2. **bytefreq** (CLI) — free, open source, millions of rows. For data engineers, CI/CD pipelines, and automated profiling workflows on a single machine.
+2. **bytefreq** (CLI) — free, open source, millions of rows. Supports CSV, JSON, Excel, and Parquet natively. For data engineers, CI/CD pipelines, and automated profiling workflows on a single machine.
 3. **DuckDB / Polars** — hundreds of millions of rows on a single machine, using bytefreq's flat enhanced output as the input.
 4. **Spark / cloud engines** — billions to trillions of rows, implementing the mask function as a UDF in a distributed framework.
 
