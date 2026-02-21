@@ -281,6 +281,50 @@ The alphabetic runs in the mask correspond to kanji and hiragana: `日` (day), `
 
 The remarkable thing is the total consistency: all 80 headlines follow the same structural template. This is clearly a machine-generated string — a template like "{day}日{hour}時{minute}分ころ、地震がありました。" filled in with the event's date and time. The profiler confirms what we might suspect: this field is auto-generated, not human-authored, and its structure is completely predictable.
 
+## Character Profiling: The Full-Width Digit Discovery
+
+The bytefreq profiler has a Character Profiling mode (`-r CP`) that goes beyond structural masks to count every distinct Unicode code point in the data. Where masking tells you the shape of a field, character profiling tells you the exact inventory of characters that compose it. We ran the headline text field through character profiling and the results are remarkable.
+
+```
+Hex       Char   Count   Unicode Name
+------    ----   -----   ----------------------------------
+U+3001    、       80    IDEOGRAPHIC COMMA
+U+3002    。       80    IDEOGRAPHIC FULL STOP
+U+3042    あ       80    HIRAGANA LETTER A
+U+304C    が       80    HIRAGANA LETTER GA
+U+3053    こ       80    HIRAGANA LETTER KO
+U+3057    し       80    HIRAGANA LETTER SI
+U+305F    た       80    HIRAGANA LETTER TA
+U+307E    ま       80    HIRAGANA LETTER MA
+U+308A    り       80    HIRAGANA LETTER RI
+U+308D    ろ       80    HIRAGANA LETTER RO
+U+5206    分       80    CJK UNIFIED IDEOGRAPH (minute)
+U+5730    地       80    CJK UNIFIED IDEOGRAPH (ground)
+U+65E5    日       80    CJK UNIFIED IDEOGRAPH (day)
+U+6642    時       80    CJK UNIFIED IDEOGRAPH (hour)
+U+9707    震       80    CJK UNIFIED IDEOGRAPH (quake)
+U+FF10    ０       80    FULLWIDTH DIGIT ZERO
+U+FF11    １      108    FULLWIDTH DIGIT ONE
+U+FF12    ２       48    FULLWIDTH DIGIT TWO
+U+FF13    ３       42    FULLWIDTH DIGIT THREE
+U+FF14    ４       39    FULLWIDTH DIGIT FOUR
+U+FF15    ５       37    FULLWIDTH DIGIT FIVE
+U+FF16    ６       23    FULLWIDTH DIGIT SIX
+U+FF17    ７       20    FULLWIDTH DIGIT SEVEN
+U+FF18    ８       20    FULLWIDTH DIGIT EIGHT
+U+FF19    ９       26    FULLWIDTH DIGIT NINE
+```
+
+The first thing that jumps out is the clean division between fixed and variable characters. The fifteen non-digit characters — the ideographic comma and full stop, the five hiragana characters, and the five kanji — all appear exactly 80 times, once per earthquake record. These are the template characters, the scaffolding of the sentence `２１日１３時０３分ころ、地震がありました。` ("Around [day] [hour]:[minute], there was an earthquake."). The character profiler has reverse-engineered the template from the data alone, without reading any documentation. Every headline follows the same sentence structure, and the profiler has confirmed it by counting characters rather than by parsing grammar.
+
+The full-width digits (U+FF10 through U+FF19) tell a different story — they vary in frequency because they encode the variable date and time components. `１` (FULLWIDTH DIGIT ONE) appears 108 times, which is more than the 80 records, because it occurs in both day numbers and hour numbers. `０` (FULLWIDTH DIGIT ZERO) appears exactly 80 times, suggesting it appears once per record — likely as padding in minutes or hours like `０３`. The digit distribution is not uniform; it reflects the actual times when earthquakes occurred during the sample period. `７` and `８` appear only 20 times each, while `９` appears 26 times, because the day-of-month and hour-of-day distributions in the sample period happen to favour certain digits over others.
+
+The critical discovery, and the one with the most practical consequence, is that these are FULLWIDTH digits (U+FF10 through U+FF19), not ASCII digits (U+0030 through U+0039). Full-width characters occupy the same visual width as CJK ideographs, maintaining consistent column alignment in Japanese text — this is a deliberate formatting choice that is entirely standard in Japanese data systems. But it means that any downstream process expecting ASCII digits will fail silently. A `parseInt()` call will not parse them. A regex like `\d+` will not match them in most programming languages. A simple numeric comparison will return false. The character profiler surfaces this encoding choice immediately and unambiguously; a schema that defines the field as "string" would tell you nothing, and even the mask-based profiler, which correctly classified them as digits, did not distinguish between full-width and ASCII variants. This is the level of detail that character profiling provides: not just "there are digits here" but "there are *these specific digits*, in *this specific encoding*, and here is why that matters."
+
+This is the kind of finding that justifies character-level profiling for any dataset containing non-Latin scripts. The mask-based profiler told us there was one structural pattern (`9a9a9a_a_`), and that finding was genuinely useful — it confirmed that all 80 headlines follow the same template. The character profiler tells us WHY that pattern exists and reveals that what looks like "digits" in the mask output are actually full-width Unicode variants that require specific handling in any extraction or transformation pipeline.
+
+It is worth noting that the same character profiling technique, applied to the full station name data, separates the three Japanese writing systems cleanly. Hiragana characters (the phonetic syllabary used for grammatical particles and native Japanese words) cluster together, Katakana characters (the phonetic syllabary used for foreign loanwords and, in geographic data, for place name suffixes like ケ in 六ヶ所) appear as a distinct group, and CJK ideographs (kanji) dominate the frequency table. The most frequent kanji are `市` (city, 1,397 occurrences), `町` (town, 1,203), and `区` (ward, 396) — the administrative unit suffixes that appear in every station's municipality name. The character profiler has effectively performed a frequency analysis of Japanese place-name components, revealing the structural vocabulary of the geographic naming system without any external reference data. Where the mask told us "these are all alphabetic strings," the character profile tells us "these alphabetic strings are composed primarily of city, town, and ward designators, written in kanji, with occasional katakana suffixes" — a far richer understanding of the data.
+
 ## Summary of Findings
 
 Issues and observations discovered through mask-based profiling of 80 JMA earthquake events (2,433 station observations):
