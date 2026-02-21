@@ -18,6 +18,82 @@ cat BasicCompanyData-2021-02-01-part6_6_100k.pip | bytefreq -g LU
 
 We use LU (Low-grain Unicode) masking as the discovery grain — it collapses consecutive characters of the same class, producing a compact set of structural patterns for each column. This is the recommended starting point for any new dataset. Where precision matters, you can drill into specific fields with HU (High-grain Unicode) masking afterwards.
 
+## Structure Discovery: Column Population Analysis
+
+Before examining mask patterns, we count non-null values per column. For a tabular dataset this is the equivalent of the field path population analysis we perform on nested JSON — it tells us the shape of the data before we look at what is in it. In a pipe-delimited file with 55 columns, many of those columns will be sparsely populated, and knowing which ones are empty (and how empty) is the first step in understanding the dataset.
+
+```
+Column                                        Non-Null  % Populated
+----------------------------------------------------------------------
+CompanyName                                      99,999     100.0%
+CompanyNumber                                    99,999     100.0%
+CompanyCategory                                  99,999     100.0%
+CompanyStatus                                    99,999     100.0%
+CountryOfOrigin                                  99,998     100.0%
+Mortgages.NumMortCharges                         99,999     100.0%
+Mortgages.NumMortOutstanding                     99,999     100.0%
+Mortgages.NumMortPartSatisfied                   99,999     100.0%
+Mortgages.NumMortSatisfied                       99,999     100.0%
+SICCode.SicText_1                                99,999     100.0%
+LimitedPartnerships.NumGenPartners               99,999     100.0%
+LimitedPartnerships.NumLimPartners               99,999     100.0%
+URI                                              99,999     100.0%
+IncorporationDate                                99,947      99.9%
+ConfStmtNextDueDate                              96,331      96.3%
+RegAddress.AddressLine1                          96,168      96.2%
+RegAddress.PostCode                              95,632      95.6%
+RegAddress.PostTown                              94,988      95.0%
+Accounts.AccountRefDay                           94,821      94.8%
+Accounts.AccountRefMonth                         94,821      94.8%
+Returns.NextDueDate                              94,672      94.7%
+Accounts.NextDueDate                             94,610      94.6%
+ConfStmtLastMadeUpDate                           77,078      77.1%
+Accounts.AccountCategory                         75,465      75.5%
+Accounts.LastMadeUpDate                          69,539      69.5%
+RegAddress.Country                               65,069      65.1%
+RegAddress.AddressLine2                          63,688      63.7%
+Returns.LastMadeUpDate                           45,896      45.9%
+RegAddress.County                                38,625      38.6%
+SICCode.SicText_2                                12,406      12.4%
+PreviousName_1.CONDATE                           11,469      11.5%
+PreviousName_1.CompanyName                       11,469      11.5%
+SICCode.SicText_3                                 4,747       4.7%
+SICCode.SicText_4                                 2,040       2.0%
+PreviousName_2.CONDATE                            1,888       1.9%
+PreviousName_2.CompanyName                        1,888       1.9%
+RegAddress.CareOf                                 1,699       1.7%
+PreviousName_3.CONDATE                              379       0.4%
+PreviousName_3.CompanyName                          379       0.4%
+RegAddress.POBox                                    258       0.3%
+PreviousName_4.CONDATE                               69       0.1%
+PreviousName_4.CompanyName                           69       0.1%
+PreviousName_5.CONDATE                               25       0.0%
+PreviousName_5.CompanyName                           25       0.0%
+PreviousName_6.CONDATE                                6       0.0%
+PreviousName_6.CompanyName                            6       0.0%
+PreviousName_7.CONDATE                                2       0.0%
+PreviousName_7.CompanyName                            2       0.0%
+PreviousName_8.CONDATE                                0       0.0%
+PreviousName_8.CompanyName                            0       0.0%
+PreviousName_9.CONDATE                                0       0.0%
+PreviousName_9.CompanyName                            0       0.0%
+PreviousName_10.CONDATE                               0       0.0%
+PreviousName_10.CompanyName                           0       0.0%
+DissolutionDate                                       0       0.0%
+```
+
+The core identity fields — CompanyName, CompanyNumber, CompanyCategory, CompanyStatus, CountryOfOrigin — are 100% populated, or 99.998% in the case of CountryOfOrigin, which has exactly one empty record out of 99,999. These are the registration fundamentals, the columns that define what a company is before we know anything else about it. The four Mortgages columns and two LimitedPartnerships columns are also 100% populated, though as we will see in the field-by-field analysis, "populated" does not mean "informative" — most of these contain zeros. A column that is universally present but universally zero is telling us something about the schema rather than about the companies.
+
+The address block reveals a clear hierarchy of completeness. AddressLine1 (96.2%) and PostCode (95.6%) are near-universal, PostTown follows at 95.0%, then Country drops to 65.1%, AddressLine2 to 63.7%, and County falls to just 38.6%. County is the most sparsely populated address field, which we will confirm in the field-by-field analysis — but the population table already tells us that more than 60% of companies have no county recorded. This is not a data quality issue in the traditional sense; counties are increasingly optional in UK postal addresses and many companies simply do not provide one. The distinction matters: a field that is empty because the information was never required is fundamentally different from a field that is empty because something went wrong.
+
+The SIC code columns tell a story of diminishing specificity. SicText_1 is 100% populated (though 6,562 of those values are "None Supplied", which we will return to later), SicText_2 drops to 12.4%, SicText_3 to 4.7%, and SicText_4 to just 2.0%. Most companies declare a single industry classification. The 12.4% with a second SIC code are companies operating across multiple sectors — a recruitment agency that also provides training, for example. By the fourth code, only 2,040 companies remain, and these tend to be diversified conglomerates or holding companies with genuinely distinct lines of business.
+
+The PreviousName columns are the tabular equivalent of a ragged nested array. The schema allocates 10 slots (PreviousName_1 through PreviousName_10), but population drops exponentially: 11.5% of companies have changed name at least once, 1.9% at least twice, 0.4% three times, and by PreviousName_7 we are down to 2 companies. PreviousName_8 through PreviousName_10 are completely empty — no company in this extract has changed its name eight or more times. This is a classic schema design problem: pre-allocating fixed columns for a variable-length list. In nested JSON, this would be a single array of arbitrary length. In a flat file, it wastes 6 entirely empty column pairs and forces a hard limit of 10 name changes. The population analysis makes the waste visible at a glance.
+
+DissolutionDate is 0% populated across all 99,999 records, and this single observation tells us something important about the extract itself: this file contains only active companies. Dissolved companies would have a dissolution date. The column exists in the schema but is structurally empty in this particular data slice. This is the kind of insight that saves hours of investigation — you do not need to wonder whether dissolved companies are included, or build filters to exclude them. The population analysis answers that question before you read a single value.
+
+The accounts and returns fields show two tiers of completeness that reveal something about the lifecycle of a company. The "next due" dates (AccountRefDay, AccountRefMonth, NextDueDate, Returns.NextDueDate) cluster around 94–95% — these are forward-looking obligations that exist for almost every active company. But the "last made up" dates tell a different story: Accounts.LastMadeUpDate is 69.5% and Returns.LastMadeUpDate drops to just 45.9%. The gap between "when you must file" and "when you last filed" reveals that roughly 30% of companies have never filed accounts and 54% have never filed a return. These are most likely recently incorporated companies that have not yet reached their first filing deadline — they have obligations but no history of meeting them yet.
+
 ## Field-by-Field Analysis
 
 ### Company Number
