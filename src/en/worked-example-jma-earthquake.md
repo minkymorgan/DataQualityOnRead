@@ -22,6 +22,76 @@ The flattening produces a striking result: 80 earthquake records generate 6,551 
 
 When we collapse array indices (treating all `Pref[]` entries as equivalent, all `Area[]` entries as equivalent, and so on), the 6,551 unique paths reduce to 81 unique field paths. But these 81 fields have varying numbers of values: `Body.Earthquake.Hypocenter.Area.Name` has 80 values (one per earthquake), `Body.Intensity.Observation.Pref.Name` has 157 values (some earthquakes affect multiple prefectures), `Body.Intensity.Observation.Pref.Area.City.Name` has 1,546 values, and `Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name` has 2,433 values at the deepest level. The deeper you go in the hierarchy, the more values you get — a one-to-many fan-out at every level of nesting.
 
+## Structure Discovery: Field Population Analysis
+
+Before examining individual field values, we profile the field paths themselves. For each dot-notation path (with array indices collapsed), we count how many of the 80 earthquake records contain that path and express it as a percentage. This is the structural discovery step — it tells us the shape of the data before we look at what is in it.
+
+```
+Field Path                                                            Count  % Populated
+-----------------------------------------------------------------------------------------
+Control.DateTime                                                         80     100.0%
+Control.EditorialOffice                                                  80     100.0%
+Control.PublishingOffice                                                 80     100.0%
+Control.Status                                                           80     100.0%
+Control.Title                                                            80     100.0%
+Head.EventID                                                             80     100.0%
+Head.InfoKind                                                            80     100.0%
+Head.InfoKindVersion                                                     80     100.0%
+Head.InfoType                                                            80     100.0%
+Head.ReportDateTime                                                      80     100.0%
+Head.Serial                                                              80     100.0%
+Head.TargetDateTime                                                      80     100.0%
+Head.Title                                                               80     100.0%
+Head.enTitle                                                             80     100.0%
+Head.Headline.Text                                                       80     100.0%
+Head.Headline.Information.Item.Kind.Name                                  8      10.0%
+Head.Headline.Information.Item.Areas.Area.Code                            8      10.0%
+Head.Headline.Information.Item.Areas.Area.Name                            8      10.0%
+Body.Earthquake.ArrivalTime                                              80     100.0%
+Body.Earthquake.Magnitude                                                80     100.0%
+Body.Earthquake.OriginTime                                               80     100.0%
+Body.Earthquake.Hypocenter.Area.Code                                     80     100.0%
+Body.Earthquake.Hypocenter.Area.Coordinate                               80     100.0%
+Body.Earthquake.Hypocenter.Area.Name                                     80     100.0%
+Body.Earthquake.Hypocenter.Area.enName                                   80     100.0%
+Body.Comments.ForecastComment.Code                                       80     100.0%
+Body.Comments.ForecastComment.Text                                       80     100.0%
+Body.Comments.ForecastComment.enText                                     80     100.0%
+Body.Comments.VarComment.Code                                            75      93.8%
+Body.Comments.VarComment.Text                                            75      93.8%
+Body.Comments.VarComment.enText                                          75      93.8%
+Body.Intensity.Observation.MaxInt                                        80     100.0%
+Body.Intensity.Observation.Pref.Code                                     80     100.0%
+Body.Intensity.Observation.Pref.MaxInt                                   80     100.0%
+Body.Intensity.Observation.Pref.Name                                     80     100.0%
+Body.Intensity.Observation.Pref.enName                                   80     100.0%
+Body.Intensity.Observation.Pref.Area.Code                                80     100.0%
+Body.Intensity.Observation.Pref.Area.MaxInt                              80     100.0%
+Body.Intensity.Observation.Pref.Area.Name                                80     100.0%
+Body.Intensity.Observation.Pref.Area.enName                              80     100.0%
+Body.Intensity.Observation.Pref.Area.Revise                               1       1.2%
+Body.Intensity.Observation.Pref.Area.City.Code                           80     100.0%
+Body.Intensity.Observation.Pref.Area.City.MaxInt                         80     100.0%
+Body.Intensity.Observation.Pref.Area.City.Name                           80     100.0%
+Body.Intensity.Observation.Pref.Area.City.enName                         80     100.0%
+Body.Intensity.Observation.Pref.Area.City.Revise                          1       1.2%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Code          80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Int           80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name          80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.enName        80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Revise         1       1.2%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lat    80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lon    80     100.0%
+```
+
+The core earthquake structure — Control, Head, Body.Earthquake, Body.Intensity — is 100% populated across all 80 records. This is the spine of the data, the set of fields that every earthquake report shares regardless of magnitude or location. When we see 100% population at this scale, it tells us the schema is well-enforced for the core reporting obligation, which is exactly what we would expect from a national meteorological agency publishing structured seismic data.
+
+`Body.Comments.VarComment.*` drops to 93.8% — five earthquakes had no variable commentary. This is not a data quality issue; some events are too minor or too routine to warrant additional commentary. But the profiler flags it, and that is the point: the absence of a field in nested data is itself information. In a flat schema, these five records would have null values in the VarComment columns. In nested JSON, the key simply does not exist. The field population analysis treats both representations the same way, which is one of the advantages of profiling the flattened form.
+
+`Head.Headline.Information.*` appears in only 10% of records (8 earthquakes). This block contains detailed area-level intensity information in the headline — it is only populated for significant earthquakes where multiple areas experienced notable shaking. The other 90% of records have a simple text headline without the structured breakdown. This is a common pattern in operational data: optional sub-structures that are conditionally populated based on the severity or complexity of the event. The population percentage tells you immediately how common or rare the condition is.
+
+The `Revise` field appears at three levels (Area, City, IntensityStation) but only in 1.2% of records — exactly one earthquake. This is a revision flag indicating that intensity observations were updated after initial publication. It is a rare operational flag that you would never discover by reading the API documentation, but the field population analysis surfaces it immediately. In a flat schema, this field would be a column that is 98.8% null. In nested JSON, it simply does not appear in most records. The profiler treats both the same way.
+
 ## Field-by-Field Analysis
 
 The profile was generated using bytefreq in LU (Low-grain Unicode) mode, the same starting grain used for the Companies House example.

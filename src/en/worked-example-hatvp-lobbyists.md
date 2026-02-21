@@ -16,6 +16,68 @@ Because this is nested JSON rather than flat tabular data, we use the same flatt
 
 The LU grain is the right starting point here. It collapses consecutive characters of the same class (uppercase, lowercase, digit, punctuation) into single representative characters, giving us a compact set of structural masks for each field. Where we need finer discrimination — as we will see with the `dirigeants.civilite` field — we can drill into HU (High-grain Unicode) mode for specific fields.
 
+## Structure Discovery: Field Population Analysis
+
+Before examining individual field values, we profile the field paths themselves. For each dot-notation path (with array indices collapsed), we count how many of the 405 lobbyist records contain that path and express it as a percentage. This is the structural discovery step — it tells us the shape of the data before we look at what is in it.
+
+```
+Field Path                                                            Count  % Populated
+-----------------------------------------------------------------------------------------
+denomination                                                            405     100.0%
+typeIdentifiantNational                                                 405     100.0%
+identifiantNational                                                     405     100.0%
+codePostal                                                              405     100.0%
+ville                                                                   405     100.0%
+pays                                                                    405     100.0%
+dateCreation                                                            405     100.0%
+datePremierePublication                                                 405     100.0%
+categorieOrganisation.code                                              405     100.0%
+categorieOrganisation.label                                             405     100.0%
+categorieOrganisation.categorie                                         405     100.0%
+activites.listSecteursActivites.code                                    405     100.0%
+activites.listSecteursActivites.label                                   405     100.0%
+activites.listNiveauIntervention.code                                   405     100.0%
+dirigeants.nom                                                          366      90.4%
+dirigeants.prenom                                                       366      90.4%
+dirigeants.civilite                                                     366      90.4%
+dirigeants.fonction                                                     366      90.4%
+collaborateurs.nom                                                      366      90.4%
+collaborateurs.civilite                                                 366      90.4%
+collaborateurs.fonction                                                 271      66.9%
+exercices.publicationCourante.dateDebut                                 403      99.5%
+exercices.publicationCourante.dateFin                                   403      99.5%
+exercices.publicationCourante.nombreSalaries                            315      77.8%
+exercices.publicationCourante.montantDepense                            315      77.8%
+exercices.publicationCourante.chiffreAffaire                            163      40.2%
+lienSiteWeb                                                             304      75.1%
+adresse                                                                 306      75.6%
+lienPageLinkedin                                                        196      48.4%
+emailDeContact                                                          169      41.7%
+lienPageTwitter                                                         140      34.6%
+telephoneDeContact                                                      132      32.6%
+lienPageFacebook                                                        116      28.6%
+clients.denomination                                                     88      21.7%
+nomUsage                                                                205      50.6%
+dateDernierePublicationActivite                                         301      74.3%
+lienListeTiers                                                           21       5.2%
+nomUsageHatvp                                                            44      10.9%
+sigleHatvp                                                               51      12.6%
+dateCessation                                                            39       9.6%
+motifDesinscription                                                      39       9.6%
+ancienNomHatvp                                                            2       0.5%
+exercices.publicationCourante.activites...actionsRepresentationInteret.observation   151  37.3%
+```
+
+The registration core — name, identifier, postal code, city, country, dates, category, sectors — is 100% populated across all 405 records. These are mandatory registration fields, the skeleton that every lobbyist record shares. When we see a block of fields all at 100%, it confirms that the registration system enforces these as required inputs, and it gives us a stable foundation to work from when we start profiling values.
+
+Director and collaborator names are 90.4% populated — but `collaborateurs.fonction` drops to 66.9%. A third of collaborators have no declared role. This is a data completeness issue hiding inside the nesting: the person exists in the array, but their function field is missing. A flat schema would show this as a null column. In nested JSON, the key simply is not present in some array elements. The profiler treats both the same way, which is why the flatten-then-profile approach works so well for this kind of discovery.
+
+Financial data tells a story of progressive disclosure. `exercices.publicationCourante.dateDebut` is 99.5% (nearly universal), but `nombreSalaries` and `montantDepense` drop to 77.8%, and `chiffreAffaire` (revenue) falls to just 40.2%. Organisations are required to declare exercise periods but increasingly opt out of financial detail. Revenue is the most sensitive field, and fewer than half disclose it. The field population percentages quantify this reluctance in a way that no amount of manual inspection could — you see the gradient from near-universal to minority compliance in a single column of numbers.
+
+Contact and social media fields follow a clear hierarchy: website (75.1%) > LinkedIn (48.4%) > email (41.7%) > Twitter (34.6%) > phone (32.6%) > Facebook (28.6%). This is not random — it reflects institutional communication preferences. Websites are near-universal for organisations, LinkedIn is the professional default, and Facebook has fallen out of favour for institutional lobbying. The field population percentages tell you this without reading a single value.
+
+At the bottom of the table, operational fields appear: `dateCessation` and `motifDesinscription` (9.6%) mark organisations that have de-registered from the lobbying register, `ancienNomHatvp` (0.5%) records name changes — just 2 out of 405. These sparse fields are invisible in a casual inspection of the data but the population analysis surfaces them immediately. They are the kind of fields that cause edge-case bugs in downstream processing because developers never encounter them during testing.
+
 ## Field-by-Field Analysis
 
 ### Organisation Name (denomination)
