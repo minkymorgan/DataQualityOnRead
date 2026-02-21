@@ -98,6 +98,8 @@ The accounts and returns fields show two tiers of completeness that reveal somet
 
 ### Company Number
 
+`CompanyNumber`
+
 ```
 Mask     Count      %       Example
 9       87,730   87.7%      12432873
@@ -112,6 +114,8 @@ The dominant format `9` (87.7%) represents standard company numbers — eight nu
 **Issues found:** None. This is a well-structured identifier with consistent formatting. The three patterns are all legitimate and well-documented. A good assertion rule would validate that the prefix letters match known jurisdiction codes.
 
 ### Registered Address: Postcode
+
+`RegAddress.PostCode`
 
 ```
 Mask              Count      %       % of Prev   Example
@@ -148,6 +152,8 @@ The cliff drops from 7,347 to 12 — a percentage-of-previous of **0.3%**. Every
 - `9` and `9 9` (3 each, e.g. `0255`, `19 904`) — numeric values, likely foreign postal codes or phone number fragments.
 
 ### Registered Address: Post Town
+
+`RegAddress.PostTown`
 
 ```
 Mask              Count      %       Example
@@ -196,6 +202,8 @@ Below the cliff, things get interesting:
 **Key finding:** At least 59 records have postcodes or street addresses in the town field, indicating systematic column misalignment in a subset of the source data.
 
 ### Registered Address: County
+
+`RegAddress.County`
 
 ```
 Mask              Count      %       Example
@@ -262,6 +270,8 @@ Below the cliff, a catalogue of problems:
 
 ### Registered Address: Country
 
+`RegAddress.Country`
+
 ```
 Mask              Count      %       Example
 A                41,019   41.0%      ENGLAND
@@ -284,6 +294,8 @@ Below the cliff:
 
 ### Company Category
 
+`CompanyCategory`
+
 ```
 Mask                                               Count      %       Example
 Aa Aa Aa                                          85,872   85.9%      Private Limited Company
@@ -304,6 +316,8 @@ The 3-record `PRIV LTD SECT. 30` mask is a third variation: all-caps abbreviatio
 
 ### Company Status
 
+`CompanyStatus`
+
 ```
 Mask                                Count      %       Example
 Aa                                 96,621   96.6%      Active
@@ -319,6 +333,8 @@ A                                       5    0.0%      RECEIVERSHIP
 **Treatment:** Normalise casing to title case.
 
 ### Country of Origin
+
+`CountryOfOrigin`
 
 ```
 Mask              Count      %       Example
@@ -338,6 +354,8 @@ One record is completely empty — a company with no country of origin recorded.
 
 ### Incorporation Date
 
+`IncorporationDate`
+
 ```
 Mask              Count      %       Example
 9_9_9            99,947   99.9%      07/12/2016
@@ -349,6 +367,8 @@ Mask              Count      %       Example
 **Action:** Flag for review. These 52 records are genuine edge cases in the domain, not data entry errors.
 
 ### Accounts Category
+
+`Accounts.AccountCategory`
 
 ```
 Mask              Count      %       Example
@@ -364,6 +384,8 @@ The dominant value is `NO ACCOUNTS FILED` (54.6%), followed by empty (24.5%) and
 No structural data quality issues here — the patterns are all legitimate. But the 24.5% empty rate is worth noting: nearly a quarter of companies have no accounts category recorded. This could indicate recently incorporated companies that have not yet filed.
 
 ### SIC Code
+
+`SICCode.SicText_1`
 
 ```
 Mask                                  Count      %       Example

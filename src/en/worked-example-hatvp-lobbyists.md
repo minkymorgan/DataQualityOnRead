@@ -82,6 +82,8 @@ At the bottom of the table, operational fields appear: `dateCessation` and `moti
 
 ### Organisation Name (denomination)
 
+`denomination`
+
 ```
 Mask              Count   Example
 A A                  65   OTRE GIRONDE
@@ -101,6 +103,8 @@ The dominant masks are exactly what we would expect for organisation names in up
 None of these are errors per se — they are legitimate organisation names. But the masks tell us immediately that any downstream process relying on "organisation names are alphabetic words separated by spaces" will need to account for apostrophes, punctuation marks, and trailing numbers. The mask frequency table is the specification that the data never came with.
 
 ### Address (adresse)
+
+`adresse`
 
 ```
 Mask              Count   Example
@@ -128,6 +132,8 @@ Third, postal box codes. `A 9` (13 records, e.g. `CS 70044`) represents CEDEX so
 
 ### Postal Code (codePostal)
 
+`codePostal`
+
 ```
 Mask        Count   Example
 9             401   75019
@@ -142,6 +148,8 @@ The ` 9` mask (2 records, e.g. `1000`) has a leading space — note the space be
 And then there is `A9A9A` (1 record: `EC1R4QB`). That is a UK postcode — an alphanumeric format that is structurally unmistakable in a field of French five-digit codes. A British organisation registered in the French lobbyist registry, and the postal code field accepted whatever was submitted. The mask catches it instantly because the structural pattern is completely unlike the surrounding data.
 
 ### City (ville)
+
+`ville`
 
 ```
 Mask              Count   Example
@@ -174,6 +182,8 @@ And then the distinctly French conventions: `A A_ A` (1 record, `VILLEBON S/ YVE
 
 ### Country (pays)
 
+`pays`
+
 ```
 Mask        Count   Example
 A             375   FRANCE
@@ -187,6 +197,8 @@ Four masks, essentially two country values. `FRANCE` appears in three casing var
 The real issue here is not the lone UK record — it is the casing inconsistency. 375 records say `FRANCE`, 22 say `France`, 1 says `france`. These are not three different countries. A downstream join or group-by on this field will produce three separate buckets for the same value unless casing is normalised first. The profiler makes this immediately obvious because each casing variant produces a different mask.
 
 ### Organisation Category (categorieOrganisation.label)
+
+`categorieOrganisation.label`
 
 ```
 Mask                                                          Count   Example
@@ -205,6 +217,8 @@ Note that LU mode treats accented characters (é, è, ê) the same as their unac
 
 ### Directors: Title (dirigeants.civilite)
 
+`dirigeants.civilite`
+
 ```
 Mask    Count   Example
 A         760   M
@@ -215,6 +229,8 @@ A single mask: `A`. Every value collapses to uppercase alpha. But this field con
 This is a case where you would drill into HU (High-grain Unicode) mode, which preserves character count, to separate `M` from `MME` and get the gender distribution. At LU grain, the field looks perfectly uniform. At HU grain, the two populations would separate cleanly. It is a useful reminder that profiling grain is a choice, and the right grain depends on the question you are asking.
 
 ### Directors: Surname (dirigeants.nom)
+
+`dirigeants.nom`
 
 ```
 Mask        Count   Example
@@ -233,6 +249,8 @@ The apostrophe in French surnames (as in `D'ORFEUIL`, `N'GOADMY`) is structurall
 
 ### Directors: First Name (dirigeants.prenom)
 
+`dirigeants.prenom`
+
 ```
 Mask        Count   Example
 Aa            697   Carole
@@ -248,6 +266,8 @@ The fourth mask is the standout of the entire dataset. `Aa_a` (1 record: `Ro!and
 This single record is worth the entire profiling exercise as a demonstration. No schema would catch it — the field is a valid string. No length check would catch it — `Ro!and` is six characters, perfectly reasonable for a first name. No lookup table would catch it unless you had an exhaustive dictionary of every possible French first name. But the structural profile catches it immediately, because the shape of the data is wrong. That is the core proposition of mask-based profiling, illustrated in a single record.
 
 ### Directors: Role (dirigeants.fonction)
+
+`dirigeants.fonction`
 
 ```
 Mask                        Count   Example
@@ -277,6 +297,8 @@ A treatment function for this field would need to normalise casing (choosing one
 
 ### Email (emailDeContact)
 
+`emailDeContact`
+
 ```
 Mask              Count   Example
 a_a.a                66   contact@cdcf.com
@@ -294,6 +316,8 @@ Variations include dots in the local part (`a.a_a.a`: `jean.dupont@example.fr`),
 No structural errors here — the patterns all represent valid email formats. The 58.3% null rate is the main finding: more than half of registered lobbying organisations have not provided a contact email.
 
 ### Expenditure (exercices.publicationCourante.montantDepense)
+
+`exercices.publicationCourante.montantDepense`
 
 ```
 Mask                                  Count   Example
@@ -314,6 +338,8 @@ This pattern — encoding quantitative information as text ranges — is not unc
 
 ### Revenue Band (exercices.publicationCourante.chiffreAffaire)
 
+`exercices.publicationCourante.chiffreAffaire`
+
 ```
 Mask                          Count   Example
 _ _ 9 9 9 a                    225   >= 1 000 000 euros
@@ -328,6 +354,8 @@ The consistency between this field and `montantDepense` suggests a systematic en
 
 ### Employee Count (exercices.publicationCourante.nombreSalaries)
 
+`exercices.publicationCourante.nombreSalaries`
+
 ```
 Mask    Count   Example
 9.9     1,046   1.0
@@ -340,6 +368,8 @@ This is a common issue with JSON data produced by systems that use loosely-typed
 The treatment is straightforward: parse as float, cast to integer, validate that the decimal portion is always `.0`. But you need to know the issue exists before you can treat it, and the mask tells you on the first profiling run.
 
 ### Website (lienSiteWeb)
+
+`lienSiteWeb`
 
 ```
 Mask              Count   Example
@@ -358,6 +388,8 @@ The `a_a-a.a_` mask (12 records) represents `http://` (without TLS) — these or
 
 ### Dates (exercices.publicationCourante.dateDebut)
 
+`exercices.publicationCourante.dateDebut`
+
 ```
 Mask    Count   Example
 9-9-9   1,953   01-04-2025
@@ -366,6 +398,8 @@ Mask    Count   Example
 1,953 of 1,954 values share the same mask: `9-9-9`, representing the DD-MM-YYYY format with dashes. One value is presumably empty or structurally different — a single anomaly in nearly two thousand records. This is a well-controlled field with consistent formatting. The dash separator (rather than slash or dot) is the dominant French date convention in administrative systems.
 
 ### National Identifier (identifiantNational)
+
+`identifiantNational`
 
 ```
 Mask    Count   Example

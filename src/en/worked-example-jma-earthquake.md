@@ -98,6 +98,8 @@ The profile was generated using bytefreq in LU (Low-grain Unicode) mode, the sam
 
 ### Hypocenter Name (Japanese)
 
+`Body.Earthquake.Hypocenter.Area.Name`
+
 ```
 Mask    Count   Example
 a          78   福島県会津
@@ -111,6 +113,8 @@ This is correct behaviour. At low grain, we are asking "what is the structural s
 For CJK text, if you need to distinguish between names of different lengths, you would switch to HU (High-grain Unicode) mode, which preserves character counts. But for discovery profiling, the LU result tells us exactly what we need to know: this field is structurally uniform.
 
 ### Hypocenter Name (English)
+
+`Body.Earthquake.Hypocenter.Area.enName`
 
 ```
 Mask                                Count   Example
@@ -141,6 +145,8 @@ The hyphens in masks like `Aa-Aa Aa` (e.g. `Yonagunijima Island`) reflect the ro
 
 ### Coordinate
 
+`Body.Earthquake.Hypocenter.Area.Coordinate`
+
 ```
 Mask            Count   Example
 _9.9_9.9-9_        72   +36.6+140.6-10000/
@@ -153,6 +159,8 @@ This is a JMA-specific coordinate encoding. A schema would describe this field a
 
 ### Magnitude
 
+`Body.Earthquake.Magnitude`
+
 ```
 Mask    Count   Example
 9.9        80   3.6
@@ -161,6 +169,8 @@ Mask    Count   Example
 Perfectly consistent. Every magnitude is a decimal number, collapsed to `9.9` by the low-grain mask. No exceptions, no missing values, no structural anomalies. This is what a well-controlled numeric field looks like under profiling.
 
 ### Maximum Intensity
+
+`Body.Intensity.Observation.MaxInt`
 
 ```
 Mask    Count   Example
@@ -171,6 +181,8 @@ Single digit, perfectly consistent across all 80 records. The JMA seismic intens
 
 ### Prefecture Name (Japanese)
 
+`Body.Intensity.Observation.Pref.Name`
+
 ```
 Mask    Count   Example
 a         157   沖縄県
@@ -180,6 +192,8 @@ All 157 prefecture name values collapse to `a` — the same pattern we saw with 
 
 ### City Name (Japanese)
 
+`Body.Intensity.Observation.Pref.Area.City.Name`
+
 ```
 Mask    Count   Example
 a       1,545   錦江町
@@ -188,6 +202,8 @@ a       1,545   錦江町
 Again, near-total uniformity: 1,545 of 1,546 city names collapse to `a`. The one exception (not shown in this summary) likely contains a non-kanji character — a numeral, a Latin letter, or an unusual punctuation mark in the city name. At this level of consistency, a single exception in 1,546 values is exactly the kind of outlier the profiler is designed to surface.
 
 ### Station Name (Japanese)
+
+`Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name`
 
 ```
 Mask    Count   Example
@@ -204,6 +220,8 @@ The mask has discovered a structural encoding convention that carries semantic m
 The `a9a_` and `a9a` masks (12 and 6 values respectively) indicate station names that contain digits — likely stations identified by number within a municipality, such as "第２観測点" (Observation Point 2). The digit creates a break in the alphabetic run, producing a three-segment mask instead of a single `a`.
 
 ### Station Name (English)
+
+`Body.Intensity.Observation.Pref.Area.City.IntensityStation.enName`
 
 ```
 Mask                    Count   Example
@@ -241,6 +259,8 @@ The `_` at the end of many masks corresponds to the asterisk (`*`) in the Englis
 
 ### Station Intensity
 
+`Body.Intensity.Observation.Pref.Area.City.IntensityStation.Int`
+
 ```
 Mask    Count   Example
 9       2,433   1
@@ -249,6 +269,8 @@ Mask    Count   Example
 Perfectly consistent across all 2,433 station observations. Every intensity value is a single digit.
 
 ### Station Latitude
+
+`Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lat`
 
 ```
 Mask    Count   Example
@@ -259,6 +281,8 @@ Every latitude value is a decimal number, collapsed to `9.9` by the low-grain ma
 
 ### Station Longitude
 
+`Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lon`
+
 ```
 Mask    Count   Example
 9.9     2,433   139.58
@@ -267,6 +291,8 @@ Mask    Count   Example
 Same as latitude — perfectly consistent decimal numbers across all 2,433 values.
 
 ### Headline Text (Japanese)
+
+`Head.Headline.Text`
 
 ```
 Mask        Count   Example
@@ -365,4 +391,6 @@ Issues and observations discovered through mask-based profiling of 80 JMA earthq
 
 **5. The ragged row problem is real, and the flat enhanced format handles it.** Eighty earthquake records produce 6,551 unique key paths because the array depths vary from record to record. In a traditional tabular format, you would have to either (a) create columns for the maximum possible number of stations, prefectures, areas, and cities — most of which would be empty in most records — or (b) normalise the data into multiple related tables before profiling. The flat enhanced format avoids both of these: each record is a bag of key-value pairs with no requirement for structural uniformity across records. This is not a theoretical advantage; with real nested data, it is the difference between profiling the data as-is and spending days on schema design before profiling can begin.
 
-**6. One profiling technique, any data source.** The Companies House example in the preceding appendix profiles pipe-delimited CSV from a UK government register. This example profiles nested JSON from a Japanese government API. The data could not be more different in structure, language, encoding, or domain. The profiling technique is identical. Flatten, mask, count, sort, interpret. The masks change, the character classes change, the domain knowledge required for interpretation changes — but the method does not. That universality is the core claim of this book, and these two worked examples are the evidence.
+**6. Wildcard profiling across nested paths.** When the same field name appears at multiple levels of a nested structure — or across multiple datasets — we can profile them collectively using a wildcard pattern. A query like `*.Name` would gather every `Name` field regardless of its position in the hierarchy: `Body.Earthquake.Hypocenter.Area.Name`, `Body.Intensity.Observation.Pref.Name`, `Body.Intensity.Observation.Pref.Area.City.Name`, and so on. This allows us to compare the same semantic field across different nesting contexts. In the Companies House example, `RegAddress.PostCode` is a single column. But if postcodes appeared in multiple nested structures — billing address, shipping address, registered office — we could profile `*.PostCode` to see all postcodes regardless of context, or drill into individual paths when the aggregate profile reveals anomalies. This wildcard approach works across files, fields, and datasets, making it a powerful tool for cross-cutting analysis.
+
+**7. One profiling technique, any data source.** The Companies House example in the preceding appendix profiles pipe-delimited CSV from a UK government register. This example profiles nested JSON from a Japanese government API. The data could not be more different in structure, language, encoding, or domain. The profiling technique is identical. Flatten, mask, count, sort, interpret. The masks change, the character classes change, the domain knowledge required for interpretation changes — but the method does not. That universality is the core claim of this book, and these two worked examples are the evidence.
