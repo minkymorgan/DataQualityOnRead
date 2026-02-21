@@ -1,323 +1,321 @@
-# Worked Example: Profiling UK Companies House Data
+# Worked Example: Profiling UK Companies House Data {.unnumbered}
 
-In this appendix we take the techniques described throughout the book and apply them end-to-end against a real, publicly available dataset: the UK Companies House BasicCompanyData file. The data is free, it is large enough to be interesting, and it contains exactly the kinds of quality issues that mask-based profiling was designed to surface. If you have read the preceding chapters and want to see the entire workflow in one place — from running the profiler to interpreting the output — this is the chapter for you.
+This appendix is a complete worked example. We take a real dataset — 99,999 company registration records from UK Companies House — and profile it end to end using bytefreq's low-grain Unicode (LU) masking. For each field, we show the actual mask frequency table, identify the cliff point where applicable, and catalogue every data quality issue we find. The result is a concrete illustration of the techniques described in the preceding chapters, applied to real government data with real problems.
 
 ## The Dataset
 
-Companies House is the UK government register of limited companies, limited liability partnerships, and other corporate entities. It publishes a free bulk download of the register, updated monthly, at [download.companieshouse.gov.uk](http://download.companieshouse.gov.uk). The file we profile here is a 99,999-row extract from the BasicCompanyData snapshot dated February 2021. The file is pipe-delimited (a `.pip` file) and contains columns covering company number, registered address, company category, status, country of origin, incorporation date, accounts information, and SIC codes among others.
+Companies House publishes a free monthly snapshot of every company registered in England and Wales, Scotland, and Northern Ireland. The **BasicCompanyData** file is a pipe-delimited extract containing company name, registered address, incorporation date, SIC codes, company status, and related metadata. It is freely available from [download.companieshouse.gov.uk](http://download.companieshouse.gov.uk/).
 
-This is real public data, not a synthetic test set. Every count, every mask, and every example value shown below comes directly from the profiling output.
+The extract used here is `BasicCompanyData-2021-02-01-part6_6_100k.pip` — 99,999 records from the February 2021 release. It contains 55 columns, ranging from well-structured identifiers (company number) to free-text fields (company name, address lines) to date fields, categorical codes, and URLs. It is exactly the kind of messy, real-world dataset that DQOR techniques are designed for.
 
 ## Running the Profile
 
-We run two passes of bytefreq against the file — one at high grain (HU) and one at low grain (LU). High grain preserves the exact shape of every character (uppercase letters become `A`, lowercase become `a`, digits become `9`, whitespace and punctuation are preserved literally). Low grain collapses consecutive runs of the same class into a single token, which is useful for seeing broader structural patterns.
+The profile was generated with a single command:
 
 ```bash
-cat BasicCompanyData.pip | bytefreq -g HU
-cat BasicCompanyData.pip | bytefreq -g LU
+cat BasicCompanyData-2021-02-01-part6_6_100k.pip | bytefreq -g LU
 ```
 
-The profiler examines all 99,999 rows and produces a frequency-ranked list of masks for each column. We focus on the top 25 masks per field, which is more than sufficient to identify the dominant patterns, the cliff point, and the exceptions that warrant investigation.
+We use LU (Low-grain Unicode) masking as the discovery grain — it collapses consecutive characters of the same class, producing a compact set of structural patterns for each column. This is the recommended starting point for any new dataset. Where precision matters, you can drill into specific fields with HU (High-grain Unicode) masking afterwards.
 
 ## Field-by-Field Analysis
 
-### CompanyNumber
+### Company Number
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 87,730 | `99999999` | 12043882 |
-| 12,144 | `AA999999` | SC578524 |
-| 109 | `AA99999A` | IP13845R |
-| 14 | `AA9999AA` | SP2487RS |
-| 1 | `A9999999` | R0000099 |
-| 1 | `AA999AAA` | SP004SAS |
+```
+Mask     Count      %
+9       87,730   87.7%
+A9      12,145   12.1%
+A9A        124    0.1%
+```
 
-The dominant pattern is an eight-digit numeric company number (87.7% of the population). The second pattern, a two-letter prefix followed by six digits, accounts for a further 12.1% — these are Scottish companies (SC), Northern Irish companies (NI), and other jurisdiction prefixes. Together the top two masks account for 99.9% of records.
+Three masks, no cliff point needed — with only three patterns, every one is worth understanding.
 
-Below the cliff point we find 109 records matching `AA99999A` (such as IP13845R — an Industrial and Provident Society number), 14 matching `AA9999AA`, and two singleton anomalies: `R0000099` and `SP004SAS`. The singleton `SP004SAS` is worth investigating as it does not conform to any standard Companies House numbering scheme and may indicate a data entry error.
+The dominant format `9` (87.7%) represents standard company numbers — eight numeric digits like `12432873`. The `A9` pattern (12.1%) covers companies with letter prefixes: `GE000152` (German registered), `SC` (Scottish), `NI` (Northern Ireland), `OC` (overseas companies), and similar jurisdiction indicators. The rare `A9A` pattern (0.1%, 124 records) covers industrial and provident societies with a trailing letter: `IP28746R`.
 
-**Recommended treatment:** Build an allow list of the three expected formats (`99999999`, `AA999999`, `AA99999A`) and optionally `AA9999AA` for Scottish Partnerships. Flag anything outside this list for manual review.
+**Issues found:** None. This is a well-structured identifier with consistent formatting. The three patterns are all legitimate and well-documented. A good assertion rule would validate that the prefix letters match known jurisdiction codes.
 
-### RegAddress.PostCode
+### Registered Address: Postcode
 
-This field provides an excellent example of the cliff point concept introduced in Chapter 6. The full HU mask table is shown below:
+```
+Mask          Count      %       % of Prev
+A9 9A        88,252   88.3%          —
+A9A 9A        7,347    7.3%        8.3%
+(empty)       4,367    4.4%       59.4%
+A9A              12    0.0%        0.3%    ← cliff point
+A9                3    0.0%       25.0%
+9                 3    0.0%      100.0%
+9 9               3    0.0%      100.0%
+A9 9A.            2    0.0%       66.7%
+A9 9 A            2    0.0%      100.0%
+A9 A              2    0.0%      100.0%
+A9A9A             1    0.0%       50.0%
+A_A9 9A           1    0.0%      100.0%
+A 9               1    0.0%      100.0%
+A 9A              1    0.0%      100.0%
+9A A              1    0.0%      100.0%
+A9A 9 A           1    0.0%      100.0%
+```
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 38,701 | `AA9 9AA ` | DY4 8RS |
-| 35,691 | `AA99 9AA` | OX49 5QY |
-| 7,900 | `A99 9AA ` | B49 5AB |
-| 5,956 | `A9 9AA  ` | N1 6BY |
-| 5,378 | `AA9A 9AA` | EC1Y 8JJ |
-| 4,367 | *(empty)* | |
-| 1,967 | `A9A 9AA ` | W1U 8LD |
-| 7 | `AA999AA ` | SK104NY |
-| 5 | `AA99AA  ` | CO92NU |
-| 2 | `AA9 9AA.` | BR5 3RX. |
-| 2 | `9999    ` | 8022 |
-| 2 | `A9   9AA` | M2 2EE... |
-| 2 | `99 999  ` | 19 904 |
-| 1 | `A99A 9AA` | W14K 4QY |
-| 1 | `AA99 9 AA` | SW18 4 UH |
-| 1 | `AAAAA 9 ` | BLOCK 3 |
-| 1 | `AA99999 ` | BB14006 |
-| 1 | `AA9A 9 AA` | EC1V 1 NR |
-| 1 | `AA9A9AA ` | EC1V2NX |
-| 1 | `A_A9 9AA` | L;N9 6NE |
-| 1 | `AA9     ` | SW1 |
-| 1 | `AA99    ` | IP20 |
-| 1 | `99999   ` | 94596 |
-| 1 | `AA99 99AA` | LE11 11DX |
-| 1 | `9A AAA  ` | 2L ONE |
+This field is analysed in detail in Chapter 6 using the HU (high-grain) profile, which separates the five standard UK postcode formats. At LU grain, those five formats collapse into two masks: `A9 9A` (the standard pattern) and `A9A 9A` (formats where the outward code ends in a letter, like `W1T 6AD` or `EC1V 2NX`).
 
-The cliff point sits clearly between the mask `A9A 9AA` (1,967 records) and `AA999AA` (7 records). Above the cliff, we have the six standard UK postcode formats plus 4,367 empty values, accounting for 99,960 of the 99,999 rows. Below the cliff we find 39 records exhibiting a range of issues: missing spaces (`SK104NY`, `CO92NU`, `EC1V2NX`), trailing punctuation (`BR5 3RX.`), extra spaces (`SW18 4 UH`, `EC1V 1 NR`, `M2 2EE...`), partial postcodes (`SW1`, `IP20`), foreign postal codes (`8022`, `94596`, `19 904`), what appears to be an address fragment rather than a postcode (`BLOCK 3`, `2L ONE`), a typographical error with a semicolon in place of a letter (`L;N9 6NE`), and a duplicated district code (`LE11 11DX`).
+The cliff drops from 7,347 to 12 — a percentage-of-previous of **0.3%**. Everything below is a data quality issue:
 
-The low grain profile confirms the picture. At LU grain, 88,252 records match the pattern `A9 9A` (the canonical UK postcode structure) and a further 7,347 match `A9A 9A` (the newer London-style format). Together these two LU masks account for 95.6% of the population.
+- `A9A` (12 records, e.g. `GU478QN`) — valid postcodes with the space missing. **Treatment:** insert space before the inward code.
+- `A9 9A.` (2 records, e.g. `BR7 5HF.`) — trailing full stop. **Treatment:** strip trailing punctuation.
+- `A9 9 A` (2 records, e.g. `WR9 9 AY`) — extra space in the inward code. **Treatment:** normalise whitespace.
+- `A_A9 9A` (1 record: `L;N9 6NE`) — semicolon in the postcode, likely a typo for `LN9 6NE`. **Treatment:** character substitution rule.
+- `A 9` (1 record: `BLOCK 3`) — not a postcode at all. Address fragment in the wrong field.
+- `9A A` (1 record: `2L ONE`) — not a postcode. Investigate source record.
+- `9` and `9 9` (3 each, e.g. `0255`, `19 904`) — numeric values, likely foreign postal codes or phone number fragments.
 
-**Recommended treatment:** The allow list should contain the six standard HU postcode formats. Below the cliff, apply a treatment function that strips trailing punctuation, normalises whitespace, and flags foreign or structurally invalid codes for manual remediation.
+### Registered Address: Post Town
 
-### RegAddress.PostTown
+```
+Mask             Count      %
+A               84,153   84.2%
+A A              6,299    6.3%
+(empty)          5,011    5.0%
+A A A            1,585    1.6%
+A-A-A            1,428    1.4%
+A. A               350    0.4%
+A_A A              184    0.2%
+A A. A             179    0.2%
+A, A               151    0.2%
+A A A A             79    0.1%
+A A, A              78    0.1%
+A,                  62    0.1%
+A-A-A-A             60    0.1%
+...and 86 more masks
+```
 
-| Count | LU Mask | Example |
-|------:|---------|---------|
-| 84,153 | `A` | READING |
-| 6,299 | `A A` | HEBDEN BRIDGE |
-| 5,011 | *(empty)* | |
-| 1,585 | `A A A` | STOCKTON ON TEES |
-| 1,428 | `A-A-A` | STOCKTON-ON-TEES |
-| 350 | `A. A` | ST. HELENS |
-| 184 | `A_A A` | KING'S LYNN |
-| 151 | `A, A` | MERSEYSIDE, ... |
-| 78 | `A A, A` | BILLINGTON ROAD, ... |
-| 62 | `A,` | LONDON, |
-| 32 | `9 A A` | 150 HOLYWOOD ROAD |
-| 14 | `A9 9A` | EH47 8PG |
-| 10 | `9 A A A` | 5 GREENWICH VIEW ... |
-| 10 | `A 9` | LEEDS 4 |
+The top five masks are all legitimate town name patterns: single words (`READING`), two words (`HEBDEN BRIDGE`), three words (`STOCKTON ON TEES`), hyphenated forms (`STOCKTON-ON-TEES`), and abbreviated forms (`ST. HELENS`). Together they cover 98.5% of records.
 
-The top two LU masks — single-word towns (`A`) and two-word towns (`A A`) — account for over 90% of the population. The 5,011 empties are notable but not necessarily incorrect (some company types may not require a post town).
+Below the cliff, things get interesting:
 
-The interesting findings are below the cliff. The mask `A, A` (151 records) shows values like "MERSEYSIDE, ..." — these appear to contain county or region information appended to the town with a comma, suggesting data that has been concatenated from multiple fields or entered inconsistently. The mask `A,` (62 records) with the example "LONDON," shows trailing commas — a trivial but telling sign of upstream data concatenation issues.
+- `A, A` (151 records, e.g. `MERSEYSIDE,...`) — town with trailing county or region, comma-separated. The town field is being used to store town-plus-county.
+- `A,` (62 records, e.g. `LONDON,`) — trailing comma. **Treatment:** strip trailing punctuation.
+- `9 A A` (32 records, e.g. `150 HOLYWOOD ROAD`) — a street address, not a town. Data in the wrong field entirely.
+- `A9 9A` (14 records, e.g. `EH47 8PG`) — a **postcode** in the town field. Classic column misalignment.
+- `9-9 A A` (10 records, e.g. `1-7 KING STREET`) — street addresses in the town field.
+- `A 9` (10 records, e.g. `LEEDS 4`) — historic postal district format. Legitimate but archaic.
+- `A9A 9A` (3 records, e.g. `W1K 5SL`) — another postcode in the town field.
+- `9` (2 records, e.g. `20037`) — a US ZIP code in the town field.
 
-More seriously, 14 records have the mask `A9 9A` in the PostTown field, with example `EH47 8PG`. These are postcodes sitting in the wrong column entirely. A further 32 records match `9 A A` (example: "150 HOLYWOOD ROAD") and 10 match `9 A A A` (example: "5 GREENWICH VIEW ...") — these are street addresses, not town names. This is a classic column-shift error where data from AddressLine1 or PostCode has bled into the PostTown field.
+**Key finding:** At least 59 records have postcodes or street addresses in the town field, indicating systematic column misalignment in a subset of the source data.
 
-**Recommended treatment:** Flag records where the PostTown mask matches a postcode pattern (`A9 9A`) or begins with a digit for manual review. Strip trailing commas and extraneous punctuation. Where the field contains a comma-separated compound value, consider splitting and migrating the second part to the County field.
+### Registered Address: County
 
-### RegAddress.County
+```
+Mask             Count      %
+(empty)         61,374   61.4%
+A               30,482   30.5%
+A A              6,948    6.9%
+A A A              626    0.6%
+A. A               111    0.1%
+A _ A              104    0.1%
+A.                  49    0.0%
+A A A A             40    0.0%
+A,                  35    0.0%
+A-A                 33    0.0%
+A, A                22    0.0%
+A 9                 14    0.0%
+A9 9A               11    0.0%
+A-A-A               10    0.0%
+9                    9    0.0%
+A _A_                8    0.0%
+...and 63 more masks
+```
 
-| Count | LU Mask | Example |
-|------:|---------|---------|
-| 61,374 | *(empty)* | |
-| 30,482 | `A` | HERTFORDSHIRE |
-| 6,948 | `A A` | WEST MIDLANDS |
-| 626 | `A A A` | ENGLAND AND WALES |
-| 111 | `A. A` | CO. DURHAM |
-| 104 | `A _ A` | TYNE & WEAR |
-| 49 | `A.` | KENT. |
-| 40 | `A A A A` | EAST RIDING OF ... |
-| 35 | `A,` | WORCESTER, |
-| 22 | `A, A` | HARROW, MIDDLESEX |
-| 14 | `A 9` | DELAWARE 19801 |
-| 11 | `A9 9A` | N3 2SB |
-| 10 | `A-A-A` | STOKE-ON-TRENT |
-| 9 | `9` | 100031 |
-| 8 | `A _A_` | COUNTY (OPTIONAL) |
-| 7 | `A.A` | S.GLAMORGAN |
-| 7 | `A. A.` | CO. ANTRIM. |
-| 7 | `A9` | WC1 |
-| 6 | `A A 9` | NEW YORK 10286 |
-| 5 | `A, A A` | ESSEX, GREATER ... |
-| 5 | `A,A` | HARLOW,ESSEX |
-| 3 | `A 9 A` | WY 82001 USA ... |
+The county field is 61.4% empty — expected, since counties are increasingly optional in UK addresses. The legitimate patterns (`A`, `A A`, `A A A`) cover 97.8% of populated values.
 
-The first thing to note is that 61,374 records — 61.4% of the population — have an empty County field. This is not an error; many UK addresses do not require a county, and Royal Mail does not consider it a mandatory component of a postal address. The dominant non-empty pattern `A` (single word, 30,482 records) covers standard county names like HERTFORDSHIRE, and `A A` (6,948 records) covers two-word counties like WEST MIDLANDS. Together, the empty values and these two masks account for 98.8% of records.
+Below the cliff, a catalogue of problems:
 
-Below the cliff, the exceptions tell a rich story. There are 49 records with a trailing period (`KENT.`), 35 with a trailing comma (`WORCESTER,`) — both indicative of upstream formatting artefacts. There are 22 records containing compound values with commas (`HARROW, MIDDLESEX`), suggesting a town and county have been concatenated into one field.
+- `A.` (49 records, e.g. `KENT.`) — trailing full stop on county names. **Treatment:** strip trailing punctuation.
+- `A,` (35 records, e.g. `WORCESTER,`) — trailing comma. **Treatment:** strip trailing punctuation.
+- `A 9` (14 records, e.g. `DELAWARE 19801`) — US state with ZIP code. Foreign address data in the county field.
+- `A9 9A` (11 records, e.g. `N3 2SB`) — UK postcodes in the county field. Column misalignment again.
+- `9` (9 records, e.g. `100031`) — pure numeric. Likely foreign postal codes.
+- `A _A_` (8 records, e.g. `COUNTY (OPTIONAL)`) — placeholder text left by a web form. The literal string "COUNTY (OPTIONAL)" was submitted as the county value.
+- `A A 9` (6 records, e.g. `NEW YORK 10286`) — US city with ZIP code.
+- `-` (3 records) and `- -` (1 record) — dash placeholders.
+- `A. A9 9A` (1 record, e.g. `WILTSHIRE. SN14...`) — county with postcode appended.
+- `-A-` (1 record: `--SELECT--`) — web form dropdown placeholder that was submitted as data.
+- `A9A 9A` (1 record: `LONDONWC1X 8JX`) — an entire postcode, concatenated with the city name.
 
-Then we find genuinely wrong-column data: 11 records contain what appear to be UK postcodes (`N3 2SB`), and 7 contain partial postcodes (`WC1`). There are 14 records matching `A 9` with the example "DELAWARE 19801" — a US state with a ZIP code. A further 6 records show "NEW YORK 10286" and 3 show "WY 82001 USA ..." — these are clearly US addresses stored in a UK company register, presumably for companies with overseas registered offices.
+**Key finding:** The county field is a dumping ground. Web form placeholders (`COUNTY (OPTIONAL)`, `--SELECT--`), foreign addresses, postcodes, and trailing punctuation all appear. This single field demonstrates why profiling by masks is more effective than regex validation — the variety of failure modes is too diverse for any reasonable set of hand-written rules to catch.
 
-The value `COUNTY (OPTIONAL)` appears 8 times with the mask `A _A_`. This is almost certainly a placeholder or form hint text that was submitted as actual data — a reminder that data entry interfaces can themselves be a source of quality issues.
+### Registered Address: Country
 
-**Recommended treatment:** Strip trailing punctuation (periods, commas). Flag postcodes in the county field for cross-referencing with the PostCode column. Flag US state/ZIP combinations for review against the RegAddress.Country field. Investigate the "COUNTY (OPTIONAL)" records as possible test or placeholder data.
+```
+Mask          Count      %
+A            41,019   41.0%
+(empty)      34,930   34.9%
+A A          24,039   24.0%
+A A A             5    0.0%
+A A, A            5    0.0%
+A _ A             1    0.0%
+```
 
-### RegAddress.Country
+Three legitimate patterns that together account for 99.97% of records. But there is a consistency problem: `A` (41,019) covers single-word countries like `ENGLAND`, `SCOTLAND`, `WALES`, while `A A` (24,039) covers `UNITED KINGDOM`. These are the same country expressed differently — some records say `ENGLAND`, others say `UNITED KINGDOM`, and 34.9% say nothing at all.
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 37,510 | `AAAAAAA` | ENGLAND |
-| 34,930 | *(empty)* | |
-| 23,478 | `AAAAAA AAAAAAA` | UNITED KINGDOM |
-| 2,303 | `AAAAAAAA` | SCOTLAND |
-| 1,190 | `AAAAA` | WALES |
-| 516 | `AAAAAAAA AAAAAAA` | NORTHERN IRELAND |
-| 35 | `AAAAAA AAAAAA` | UNITED STATES |
-| 8 | `AAAAAAAAA` | AUSTRALIA |
-| 1 | `AAAAAAA _ AAAAA` | ENGLAND & WALES |
+Below the cliff:
 
-The field is 34.9% empty. Among non-empty values, the data exhibits inconsistent representation of the same concept: "ENGLAND" (37,510 records), "UNITED KINGDOM" (23,478 records), "SCOTLAND" (2,303), "WALES" (1,190), and "NORTHERN IRELAND" (516). Taken together, these five values represent the constituent nations and the overarching sovereign state, but they are not interchangeable — "ENGLAND" and "UNITED KINGDOM" mean different things. Whether this matters depends on the use case, but the inconsistency should at minimum be documented.
+- `A A A` (5 records, e.g. `ISLE OF MAN`) — legitimate, just rare.
+- `A A, A` (5 records, e.g. `VIRGIN ISLANDS,...`) — legitimate but includes comma formatting.
+- `A _ A` (1 record: `ENGLAND & WALES`) — a jurisdiction description, not a country name.
 
-There is also one record with "ENGLAND & WALES" — a legal jurisdiction term rather than a country name.
+**Key finding:** The real issue here is not the exceptions — it is the inconsistency between `ENGLAND` and `UNITED KINGDOM` as country values. A treatment function should normalise these to a single canonical form (e.g. ISO 3166 country code `GB`).
 
-**Recommended treatment:** If the downstream use case requires a single normalised country value, define an allow list mapping the constituent nations to a canonical form. Flag the 35% empties for enrichment from postcode lookup services where possible.
+### Company Category
 
-### CompanyCategory
+```
+Mask                                          Count      %
+Aa Aa Aa                                     85,872   85.9%
+A_A A A_A _Aa, a a a, a a a_                 6,203    6.2%
+A_A_A _Aa, Aa a a, a a a, a a _Aa_ a_        5,585    5.6%
+Aa Aa                                         1,631    1.6%
+Aa Aa Aa Aa                                     455    0.5%
+Aa a a                                          137    0.1%
+Aa Aa a Aa Aa                                    89    0.1%
+...and 5 more masks
+```
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 80,155 | `Aaaaaaa Aaaaaaa Aaaaaaa` | Private Limited Company |
-| 6,203 | `AAA_AAA AA AAAA_AAA ...` | PRI/LTD BY GUAR... |
-| 5,585 | `AAA_AAA_AAA ...` | PRI/LBG/NSC ... |
-| 2,823 | `Aaaaaaaaaa Aaaaaaaaaaaa ...` | Charitable Incorporated... |
-| 1,375 | `Aaaaaaaaa Aaaaaaaa Aaaaaaa` | Community Interest Company |
-| 1,271 | `Aaaaaaa Aaaaaaaaaaa` | Limited Partnership |
-| 1,174 | `Aaaaaaa Aaaaaaaaa Aaaaaaaaaaa` | Limited Liability Partnership |
-| 455 | `Aaaaaaaa Aaaaaaaaaa ...` | Scottish Charitable... |
-| 353 | `Aaaaaaaaaa Aaaaaaa` | Registered Society |
-| 115 | `Aaaaaa Aaaaaaa Aaaaaaa` | Public Limited Company |
-| 3 | `AAAA AAA AAAA. 99 ...` | PRIV LTD SECT. 30 ... |
+Two formatting conventions exist side by side: human-readable (`Private Limited Company`, 85.9%) and coded abbreviations (`PRI/LTD BY...`, 6.2%; `PRI/LBG/NSC...`, 5.6%). The coded forms use slashes, parentheses, and abbreviations — a completely different format from the title case descriptions.
 
-This field contains a mix of full descriptive text and coded abbreviations. The majority value "Private Limited Company" (80.2%) uses title case with full words. But the second and third most common values — "PRI/LTD BY GUAR..." (6,203 records) and "PRI/LBG/NSC ..." (5,585 records) — use abbreviated, slash-delimited codes in uppercase. This is a clear case where two different encoding conventions coexist within the same column, likely reflecting changes to the source system over time.
+**Key finding:** This field has two distinct encoding schemes coexisting. A treatment function should either expand the abbreviations to full text or code the full text to abbreviations, depending on the consumer's needs. The profiler has discovered what no schema definition would tell you: the field is not consistently formatted.
 
-The 3 records matching `AAAA AAA AAAA. 99 ...` with the example "PRIV LTD SECT. 30 ..." are fully uppercase and use a third abbreviation style, further evidence of inconsistent encoding.
+### Company Status
 
-**Recommended treatment:** Build a lookup table mapping all abbreviated forms to their full descriptive equivalents. Standardise on one convention (preferably the full text form used by the majority). This is a classification field and should contain a controlled vocabulary.
+```
+Mask                           Count      %
+Aa                            96,621   96.6%
+Aa - Aa a Aa a                 3,277    3.3%
+Aa Aa                             79    0.1%
+Aa a Aa Aa a a a a a              12    0.0%
+Aa Aa_Aa Aa                        5    0.0%
+A                                  5    0.0%
+```
 
-### CompanyStatus
+96.6% of companies are `Active`. The `A` mask (5 records: `RECEIVERSHIP`) is the only ALL-CAPS value in a field that otherwise uses title case. This is a minor casing inconsistency — but it is the kind of thing that breaks a `CASE WHEN` statement or a join on status values.
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 95,114 | `Aaaaaa` | Active |
-| 3,277 | `Aaaaaa - Aaaaaaaa aa Aaaaaa aaa` | Active - Proposal to Strike off |
-| 1,507 | `Aaaaaaaaaaa` | Liquidation |
-| 61 | `Aa Aaaaaaaaaaaaaa` | In Administration |
-| 18 | `Aaaaaaaaa Aaaaaaaaaaa` | Voluntary Arrangement |
-| 12 | `Aaaa aaa Aaaaaaaa Aaaaaaa ...` | Live but Receiver Manager... |
-| 5 | `Aa Aaaaaaaaaaaaaa_Aaaa...` | In Administration/Receivership |
-| 5 | `AAAAAAAAAAAA` | RECEIVERSHIP |
+**Treatment:** Normalise casing to title case.
 
-The dominant values use title case ("Active", "Liquidation", "In Administration"). But 5 records show "RECEIVERSHIP" in full uppercase — the only value in the field that uses this casing convention. At LU grain these 5 records stand out clearly as mask `A` against the title-case patterns which produce `Aa` or `Aa Aa`.
+### Country of Origin
 
-**Recommended treatment:** Normalise "RECEIVERSHIP" to title case. This is a controlled vocabulary field and should use consistent casing throughout.
+```
+Mask          Count      %
+Aa Aa        99,868   99.9%
+A A              78    0.1%
+A                45    0.0%
+A A A             6    0.0%
+A A, A            1    0.0%
+(empty)           1    0.0%
+```
 
-### CountryOfOrigin
+99.87% of records show `United Kingdom` in title case. The remaining 131 records use ALL-CAPS (`SOUTH KOREA`, `AUSTRALIA`, `UNITED ARAB...`). This is the same field in the same dataset using two different casing conventions — title case for UK records, all-caps for foreign origins.
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 99,868 | `Aaaaaa Aaaaaaa` | United Kingdom |
-| 41 | `AAAAAA AAAAAA` | UNITED STATES |
-| 22 | `AAAAAA AAAAAAA` | VIRGIN ISLANDS |
-| 12 | `AAAAA` | JAPAN |
-| 10 | `AAAAAAA` | IRELAND |
-| 9 | `AAAAAAAAA` | SINGAPORE |
-| 7 | `AAAAAA` | JERSEY |
-| 5 | `AAAA AA AAA` | ISLE OF MAN |
-| 1 | *(empty)* | |
-| 1 | `AAAA` | USSR |
+One record is completely empty — a company with no country of origin recorded.
 
-This field is 99.87% "United Kingdom" in title case. Every other value is in uppercase: "UNITED STATES", "JAPAN", "IRELAND", "JERSEY", and so on. The casing inconsistency is immediately visible in the HU masks — the dominant value produces `Aaaaaa Aaaaaaa` (mixed case) while all others produce all-uppercase masks. This tells us that "United Kingdom" was likely stored as a default or auto-populated value, while all other countries were entered manually or sourced from a different lookup table.
+**Treatment:** Normalise casing. Consider mapping to ISO 3166 country codes for consistency.
 
-There is 1 empty record and 1 record containing "USSR" — a country that ceased to exist in 1991, and also "WEST GERMANY" which dissolved in 1990. These are historical artefacts that persist in the register because the company record was created before those countries ceased to exist and was never updated.
+### Incorporation Date
 
-**Recommended treatment:** Normalise casing to a single convention. Map historical country names (USSR, WEST GERMANY) to their modern equivalents if downstream systems require current ISO country codes.
+```
+Mask      Count      %
+9_9_9    99,947   99.9%
+(empty)      52    0.1%
+```
 
-### IncorporationDate
+99.95% of records have a date in `DD/MM/YYYY` format (which LU collapses to `9_9_9`). But 52 companies have **no incorporation date**. How does a registered company not have an incorporation date? These are likely very old companies (pre-dating digital records) or special entity types where the concept does not apply. Worth investigating but not necessarily an error.
 
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 99,947 | `99_99_9999` | 15/10/2019 |
-| 52 | *(empty)* | |
+**Action:** Flag for review. These 52 records are genuine edge cases in the domain, not data entry errors.
 
-This is one of the simplest fields to profile. 99,947 records contain a date in `DD/MM/YYYY` format, and 52 are empty. The LU grain confirms this: 99,947 records match `9_9_9` and 52 are blank.
+### Accounts Category
 
-The question is: how can 52 companies have no incorporation date? Every company registered at Companies House must have a date of incorporation. These records likely represent companies migrated from older systems (pre-digital registers), Royal Charter companies, or other entities where the incorporation date predates the structured data capture process. The data is not wrong in the sense of being corrupted — it is genuinely absent from the source, and that absence itself is meaningful metadata.
+```
+Mask          Count      %
+A A A        54,633   54.6%
+(empty)      24,534   24.5%
+A            18,041   18.0%
+A A           2,751    2.8%
+A A A A          40    0.0%
+```
 
-**Recommended treatment:** Flag the 52 empties for investigation. Do not default them to a placeholder date. Document the absence as a known data gap and, where possible, enrich from historical records.
+The dominant value is `NO ACCOUNTS FILED` (54.6%), followed by empty (24.5%) and single-word categories like `GROUP`, `DORMANT`, `MICRO-ENTITY` (18.0%), then two-word categories like `UNAUDITED ABRIDGED` (2.8%). The 40 records matching `A A A A` are `ACCOUNTS TYPE NOT AVAILABLE`.
 
-### Accounts.AccountCategory
+No data quality issues here — the patterns are all legitimate. But the 24.5% empty rate is worth noting: nearly a quarter of companies have no accounts category recorded. This could indicate recently incorporated companies that have not yet filed.
 
-| Count | LU Mask | Example |
-|------:|---------|---------|
-| 30,246 | `A A A` | NO ACCOUNTS FILED |
-| 24,534 | *(empty)* | |
-| 23,859 | `A A A` | TOTAL EXEMPTION FULL |
-| 13,310 | `A` | DORMANT |
-| 2,713 | `A A` | UNAUDITED ABRIDGED |
-| 2,640 | `A` | SMALL |
-| 2,085 | `A` | FULL |
-| 374 | `A A A` | TOTAL EXEMPTION SMALL |
-| 151 | `A A A` | AUDIT EXEMPTION SUBSIDIARY |
-| 40 | `A A A A` | ACCOUNTS TYPE NOT AVAILABLE |
-| 38 | `A A` | AUDITED ABRIDGED |
-| 6 | `A` | MEDIUM |
-| 3 | `A A A` | FILING EXEMPTION SUBSIDIARY |
+### SIC Code
 
-The field contains 24,534 empty values (24.5% of the population). The non-empty values are all uppercase category labels — "NO ACCOUNTS FILED" (30,246), "TOTAL EXEMPTION FULL" (23,859), "DORMANT" (13,310), and so on. Note that several different values share the same LU mask `A A A`, which illustrates why LU grain alone is not always sufficient — you sometimes need HU grain to distinguish between values that have the same structural shape but different content.
+```
+Mask                                  Count      %
+9 - Aa a a a                        17,112   17.1%
+9 - Aa a a                          11,233   11.2%
+9 - Aa a                             8,558    8.6%
+9 - Aa a a a a a.a.a.                7,068    7.1%
+9 - Aa a a a a                       6,959    7.0%
+Aa Aa                                 6,562    6.6%
+9 - Aa a a a a a a                    5,875    5.9%
+...and 146 more masks (153 total)
+```
 
-The 40 records categorised as "ACCOUNTS TYPE NOT AVAILABLE" are interesting. Unlike the 24,534 empties, these records have an explicit statement that the account type is unknown. The distinction between "empty" and "not available" is meaningful — one is absence of data, the other is presence of a deliberate classification.
+The SIC code field combines a 5-digit code with a human-readable description: `59111 - Motion picture production activities`. The LU masks vary because the descriptions vary in word count, punctuation, and casing. There are 153 unique masks — high cardinality driven by the diversity of SIC code descriptions.
 
-**Recommended treatment:** Investigate whether the 24.5% empties correlate with specific company types (newly incorporated companies that have not yet filed, for example). Treat "ACCOUNTS TYPE NOT AVAILABLE" as a distinct category, not as equivalent to empty.
+The outlier is `Aa Aa` (6,562 records): `None Supplied`. These are companies that registered without providing a SIC code. The mask tells us immediately that this value is structurally different from every other entry — it has no leading numeric code and no dash separator. A simple assertion rule could flag it: if the SIC code does not start with digits, it is not a valid code.
 
-### SICCode.SicText_1
-
-| Count | HU Mask | Example |
-|------:|---------|---------|
-| 6,562 | `Aaaa Aaaaaaaa` | None Supplied |
-| 4,424 | `99999 - Aaaaa aaaa...` | 82990 - Other business support... |
-| 3,824 | `99999 - Aaaaaaaaa aaa...` | 98000 - Residents property... |
-| 3,458 | `99999 - Aaaaaa aaaa...` | 56302 - Public houses and bars |
-| 3,110 | `99999 - Aaaaaaaaaa aaa...` | 70229 - Management consultancy... |
-| 3,028 | `99999 - Aaaaa aaaa...` | 96090 - Other service activities... |
-| 2,896 | `99999 - Aaaaaaa Aaaaaaa` | 99999 - Dormant Company... |
-
-This field combines a numeric SIC code with its textual description in a single column, using the format `99999 - Description text`. The HU masks therefore vary primarily by the shape of the description text, not by the structure of the code itself. Each unique description produces a unique HU mask, meaning the top-25 list is effectively a frequency table of the most common SIC code descriptions.
-
-The notable exception is "None Supplied" (6,562 records, 6.6%), which uses title case and has no numeric prefix. This is a placeholder value rather than a valid SIC code, and it stands out clearly in the mask output because its HU pattern (`Aaaa Aaaaaaaa`) contains no digits — it is the only common mask that lacks the leading `99999 -` structure.
-
-Also of interest is the SIC code `99999 - Dormant Company` (2,896 records), which uses a special code number (99999) rather than a standard SIC classification. This code is specific to Companies House and does not appear in the official ONS SIC code list.
-
-**Recommended treatment:** Split this field into two columns — a numeric SIC code and a separate description field — for any analytical use. Flag "None Supplied" records for enrichment where possible. Document the 99999 dormant company code as a Companies House-specific extension to the SIC standard.
+**Key finding:** The SIC code field is a composite field — a code and a description packed into a single column. The profiler cannot separate these without domain logic, but it can tell you that the structure is consistent across 93.4% of records and that `None Supplied` is the primary exception.
 
 ## Summary of Findings
 
-| Field | Issue | Records | Action |
-|-------|-------|--------:|--------|
-| CompanyNumber | Non-standard formats | 2 | Manual review |
-| RegAddress.PostCode | Missing space | 12 | Auto-correct |
-| RegAddress.PostCode | Trailing punctuation | 2 | Strip |
-| RegAddress.PostCode | Foreign postal codes | 4 | Flag for review |
-| RegAddress.PostCode | Wrong-column data | 3 | Investigate |
-| RegAddress.PostCode | Empty | 4,367 | Enrich from address |
-| RegAddress.PostTown | Postcodes in town field | 14 | Column-shift correction |
-| RegAddress.PostTown | Street addresses in town field | 42 | Column-shift correction |
-| RegAddress.PostTown | Trailing commas/punctuation | 62 | Strip |
-| RegAddress.PostTown | Empty | 5,011 | Investigate by company type |
-| RegAddress.County | Empty | 61,374 | Acceptable — document |
-| RegAddress.County | Trailing punctuation | 84 | Strip |
-| RegAddress.County | Postcodes in county field | 18 | Cross-reference |
-| RegAddress.County | US state/ZIP data | 23 | Flag for review |
-| RegAddress.County | Placeholder text | 8 | Remove |
-| RegAddress.Country | Inconsistent country naming | 23,478 | Normalise with lookup |
-| RegAddress.Country | Empty | 34,930 | Enrich from postcode |
-| RegAddress.Country | Historical country names | 2 | Map to modern |
-| CompanyCategory | Mixed encoding conventions | 11,791 | Map abbreviations to full text |
-| CompanyStatus | Inconsistent casing | 5 | Normalise to title case |
-| CountryOfOrigin | Mixed casing conventions | 131 | Normalise |
-| CountryOfOrigin | Historical country names | 2 | Map to modern |
-| IncorporationDate | Missing | 52 | Investigate — do not default |
-| Accounts.AccountCategory | Empty | 24,534 | Investigate by company type |
-| SICCode.SicText_1 | None Supplied | 6,562 | Enrich or flag |
-| SICCode.SicText_1 | Combined code and description | 93,437 | Split into two fields |
+Issues discovered through mask-based profiling of 99,999 Companies House records:
+
+**Postcodes:**
+- Missing spaces in valid postcodes (12 records) → **Treatment:** insert space
+- Trailing punctuation (2 records) → **Treatment:** strip trailing characters
+- Extra whitespace (2 records) → **Treatment:** normalise whitespace
+- Typos/special characters (1 record: semicolon) → **Treatment:** character substitution
+- Non-postcode data in postcode field (5 records) → **Flag** for review
+
+**Post Town:**
+- Postcodes in town field (17+ records) → **Flag:** column misalignment
+- Street addresses in town field (42+ records) → **Flag:** column misalignment
+- Trailing commas and punctuation (62+ records) → **Treatment:** strip trailing punctuation
+
+**County:**
+- Trailing punctuation (84 records) → **Treatment:** strip trailing characters
+- Postcodes in county field (11 records) → **Flag:** column misalignment
+- Foreign address data (20+ records) → **Flag:** non-UK addresses
+- Web form placeholders: `COUNTY (OPTIONAL)`, `--SELECT--` (9 records) → **Treatment:** replace with empty
+- Dash placeholders (4 records) → **Treatment:** replace with empty
+
+**Country:**
+- Inconsistent representation: `ENGLAND` vs `UNITED KINGDOM` vs empty → **Treatment:** normalise to ISO country code
+- 34.9% empty → **Accept** (empty is valid for this field)
+
+**Company Category:**
+- Two encoding schemes (human-readable vs coded abbreviations) → **Treatment:** normalise to single format
+
+**Company Status:**
+- Inconsistent casing: `RECEIVERSHIP` vs `Active` → **Treatment:** normalise to title case
+
+**Country of Origin:**
+- Inconsistent casing: `United Kingdom` (title case) vs `SOUTH KOREA` (all-caps) → **Treatment:** normalise casing
+
+**Incorporation Date:**
+- 52 records with no date → **Flag** for investigation (likely pre-digital or special entity types)
+
+**SIC Code:**
+- 6,562 records with `None Supplied` instead of a code → **Assertion rule:** SIC code must start with digits
 
 ## Lessons Learned
 
-This worked example, drawn entirely from a single real-world dataset, demonstrates several principles that recur throughout data quality practice.
+**1. Government data is not clean data.** This is an official register maintained by a statutory body. It is well-structured by the standards of real-world data, and it still contains web form placeholders (`--SELECT--`, `COUNTY (OPTIONAL)`), column misalignment (postcodes in the town and county fields), inconsistent casing, trailing punctuation, and foreign address fragments. If Companies House data has these issues, every dataset you receive will have them.
 
-First, the cliff point is real and it is consistent. In field after field — PostCode, PostTown, County, CompanyCategory — we see the same pattern: a small number of masks covering the vast majority of the population, then a sharp drop to a long tail of exceptions. The cliff point is not a theoretical construct; it is a visible, measurable feature of real data, and it tells us exactly where to draw the line between expected patterns and items requiring investigation.
+**2. Mask profiling finds issues that schemas cannot.** A schema tells you the postcode field is a string. Mask profiling tells you that 16 of the 99,999 records have structural anomalies — and shows you exactly what each one looks like. The postcode field has a single dominant pattern covering 88.3% of records, and every deviation from it is immediately visible in the mask frequency table.
 
-Second, wrong-column data is more common than most people expect. We found postcodes in the PostTown field, postcodes in the County field, street addresses in the PostTown field, US ZIP codes in the County field, and placeholder text where a county should be. These are not exotic edge cases — they appear in a well-maintained government register. In less carefully curated datasets they will be more prevalent still.
+**3. The cliff point works.** In every field with more than a handful of masks, the frequency distribution showed a clear separation between expected patterns and exceptions. The postcode cliff (7,347 → 12), the county cliff (104 → 49), the post town cliff (151 → 79) — each one cleanly separates the normal from the exceptional.
 
-Third, controlled vocabulary fields are rarely as controlled as they should be. CompanyCategory mixes full descriptive text with coded abbreviations. CompanyStatus mixes title case with uppercase. CountryOfOrigin uses title case for the dominant value and uppercase for everything else. RegAddress.Country cannot decide between "ENGLAND" and "UNITED KINGDOM." These inconsistencies are invisible to traditional schema validation (the field accepts a string and all values are strings) but immediately visible to mask-based profiling.
+**4. Column misalignment is a real and common problem.** Postcodes appearing in the town field, street addresses appearing in the town field, postcodes appearing in the county field — these are not random errors. They indicate systematic problems in how data was entered, migrated, or mapped between systems. Mask profiling detects them instantly because the structural pattern of a postcode (`A9 9A`) is unmistakable when it appears in a field full of alphabetic town names (`A`).
 
-Fourth, empty is not the same as absent, and absent is not the same as wrong. The 52 companies with no incorporation date are not errors — they are historical artefacts. The 24,534 empty account categories may be newly incorporated companies that have not yet filed. The 61,374 empty counties are legitimate because UK postal addresses do not require a county. Understanding *why* a field is empty is as important as knowing *that* it is empty, and the profiling output gives us the context to ask the right questions.
-
-Finally, mask-based profiling scales. We profiled 99,999 rows across dozens of fields using two simple command-line invocations. The output is a frequency table — compact, sortable, and immediately interpretable. No rules needed to be written in advance, no schema needed to be defined, no expectations needed to be configured. The data told us what it contained, and the masks told us where to look. This is the core promise of Data Quality on Read: let the data speak first, then decide what to do about it.
+**5. One profiling run, twenty minutes, real insight.** The entire analysis in this appendix was generated from a single `bytefreq` command that took seconds to run. The interpretation took longer, but the profiler did all the heavy lifting: it found the patterns, counted them, sorted them by frequency, and provided examples. Every issue catalogued above was visible in the raw output without writing a single validation rule.
