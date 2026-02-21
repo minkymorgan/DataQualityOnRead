@@ -22,7 +22,7 @@ This glossary defines the key technical terms used throughout this book. In tran
 
 **exclusion list** — A list of masks that are known to be problematic for a given column. Values whose masks match the exclusion list are flagged as errors. Compare with *allow list*.
 
-**flat enhanced format** — An output format where each field in the original data is expanded into a family of parallel columns: `.raw` (original value), `.HU` (high-grain mask), `.LU` (low-grain mask), and `.Rules` (assertions and suggestions). Inspired by the denormalised wide-table pattern used in Hadoop-era feature stores.
+**flat enhanced format** — A flattened key-value pair schema, sourced from nested data. Each field in the original data is expanded into a family of dot-notated keys: `.raw` (original value), `.HU` (high-grain mask), `.LU` (low-grain mask), and `.Rules` (assertions and suggestions). The floating schema handles ragged rows gracefully, annotations are easily added, and the namespace dot notation provides provenance and scoping.
 
 **grain** — The resolution level of a mask. *High grain* maps every character individually, preserving exact lengths. *Low grain* collapses consecutive characters of the same class into a single symbol, reducing cardinality for structural discovery.
 

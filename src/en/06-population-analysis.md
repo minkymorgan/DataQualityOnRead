@@ -4,7 +4,7 @@ Once masks have been generated for every value in a column, the next step is to 
 
 ## The Power Law of Data
 
-In practice, most columns in structured data follow a power law distribution when profiled by mask. A small number of masks (typically one to three) account for 80 to 95 percent of all values, representing the "expected" formats. A long tail of rare masks accounts for the remainder, representing anomalies, edge cases, errors, and format variations that the documentation did not mention.
+In practice, most columns in structured data follow a power law distribution when profiled by masks. A small number of masks (typically one to three) account for 80 to 95 percent of all values, representing the "expected" formats. A long tail of rare masks accounts for the remainder, representing anomalies, edge cases, errors, and format variations that the documentation did not mention.
 
 The dominant masks tell you what the column is *supposed* to contain. The long tail tells you what has gone wrong, what has drifted, or what was never documented in the first place. The population profile is, in effect, a structural census of the column.
 
