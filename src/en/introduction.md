@@ -16,6 +16,20 @@ The book is structured in three parts. Part I sets out the problem: why data qua
 
 The intended audience is anyone who works with data they did not create: data engineers, analysts, scientists, and the growing number of people who find themselves responsible for data quality without having chosen it as a career. The technique is simple enough to prototype in a single line of `sed`, and powerful enough to run in production at enterprise scale. We will cover the full range.
 
+## Discovery Before Exploration
+
+Before you profile the values in a field, you need to know what fields exist and how populated they are. This sounds obvious. It is obvious. And yet the most common mistake in data quality work is to dive straight into field-level analysis — examining the values in a column — without first understanding the shape of the dataset as a whole. Structure discovery comes before content exploration. Always.
+
+For tabular data — CSV files, fixed-width extracts, pipe-delimited feeds — this means counting non-null values per column. If a dataset has 55 columns but only 20 of them are more than 50% populated, that fact alone reshapes your entire profiling strategy. You do not need to know *what* is in the other 35 columns yet. You need to know they are mostly empty. That knowledge takes seconds to acquire and saves hours of misdirected effort.
+
+For nested data — JSON, XML, hierarchical formats — the same principle applies, but the discovery step is different. You walk the structure to find every field path, then count how many records contain each path. A JSON feed might have 200 distinct field paths, but any given record might populate only 40 of them. A field that appears in 10% of records tells you something important before you have looked at a single value. A field that appears in 100% of records tells you something different. The population profile across all paths is the first thing you need, and the last thing most people think to check.
+
+Think of it as a census before a survey. The census maps the territory: what exists, where it is, how much of it there is. The survey examines individual items in detail. Running the survey without the census means you do not know what you are missing, what you are over-sampling, or where your effort is best spent. The field population profile is the map. Profile without it and you are navigating blind.
+
+This principle prevents wasted effort in both directions. Profiling a field that is 99% empty is rarely the best use of your time — you will generate a mask frequency table dominated by a single empty-value pattern and learn almost nothing. Conversely, discovering that a field described as "mandatory" in the specification is only 45% populated is itself a significant data quality finding — and you found it in the discovery phase, before spending any time on content analysis. Some of the most valuable insights come from the map, not from the territory it describes.
+
+The worked examples in this book follow this principle explicitly. Each begins with a structure discovery phase — field counts, population rates, structural metadata — before moving to field-by-field mask analysis. This is not a stylistic choice. It is the method. Discovery before exploration, every time.
+
 ## Data Quality Without Borders
 
 The world's largest generators and consumers of data are in the public sector. Central, regional, and local governments manage millions of data transfers across ministerial boundaries every day. This separation of concerns makes government the single largest environment where Data Quality on Read is most urgently needed.

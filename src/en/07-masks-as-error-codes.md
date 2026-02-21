@@ -53,6 +53,16 @@ There is a secondary benefit to treating masks as error codes that is easy to ov
 
 This audit trail is built into the mechanism by construction. No additional logging or documentation is required — the mask is both the detection method and the explanation. In regulated environments where data lineage and transformation justification are compliance requirements, this property is particularly valuable.
 
+## Text-Encoded Numeric Ranges
+
+A particularly instructive pattern occurs when numeric data is encoded as text ranges rather than as actual numbers. In the French lobbyist registry (HATVP), the expenditure field contains values like `50000 à 99999 euros` and `10000 à 24999 euros`. These are not numbers — they are text descriptions of numeric bands. The mask at HU grain is something like `99999 a 99999 aaaaa`, which clearly reveals the structure: digits, then the French word "à", then more digits, then a unit label.
+
+This is a mask-as-error-code in a subtle sense. The mask is not "wrong" — the data faithfully represents what was reported. But the mask tells you that this field cannot be aggregated numerically without transformation. You cannot sum these ranges, compute averages, or join them to numeric thresholds. The mask diagnoses the field as requiring a treatment function that either extracts the midpoint, maps the range to a numeric band code, or flags it for domain-specific interpretation.
+
+This pattern generalises beyond French expenditure data. Survey responses ("18-24 years", "25-34 years"), salary bands ("£30,000-£39,999"), and classification ranges ("Category A-C") all encode numeric information as text. Mask-based profiling surfaces these immediately because the structural fingerprint — digits mixed with letters and delimiters — is visually distinct from either pure numeric or pure text fields. The mask doesn't just flag the anomaly; it tells you the exact encoding scheme being used.
+
+The treatment for text-encoded ranges depends on the consumer. A statistical analysis team might extract numeric boundaries and compute midpoints. A reporting team might preserve the original text labels. A downstream database might map each range to an enumerated code. The mask identifies the pattern; the treatment is domain-specific — consistent with the DQOR principle of suggestions, never mandates.
+
 ## From Detection to Treatment
 
 The logical next step, once masks have been classified as "good" or "bad" for a given column, is to define what happens to the records that fall into each category. That is the subject of the next chapter: treatment functions and the data quality loop.

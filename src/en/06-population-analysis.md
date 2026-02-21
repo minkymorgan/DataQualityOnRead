@@ -1,5 +1,19 @@
 # Population Analysis
 
+## Structure Discovery: The Step Before Profiling
+
+Before you profile the values in a field, you need to know what fields exist and how populated they are. This is structure discovery — the census before the survey. It answers the most basic question about a dataset: what is actually here?
+
+For tabular data — CSV files, fixed-width extracts, database tables — structure discovery means counting non-null values per column. In the UK Companies House dataset (55 columns, 100,000 records), this immediately reveals that `DissolutionDate` is 0% populated (the extract contains only active companies), that the four `SICCode` columns cascade from 100% down to 2% (most companies register one industry code; very few register four), and that the `PreviousName` columns cascade from 11.5% to 0% (most companies have never changed their name, and almost none have changed it ten times). These are significant findings before a single mask is generated.
+
+For nested JSON, structure discovery means walking the tree to find all unique field paths and counting how many records contain each. In the JMA earthquake data (80 events, 2,433 station observations), the field `Head.Headline.Information` appears in only 10% of records — indicating it is reserved for significant earthquakes that warrant a headline. The field `Body.Earthquake.Hypocenter.Area.DetailedName` appears at 0% in the sampled data, suggesting it is either deprecated or reserved for a specificity level that none of the sampled events triggered. The structure itself is the first finding.
+
+The population profile of field paths creates a map of the dataset. Fields at 100% are the backbone — they appear in every record and define the core structure. Fields at 0% are dormant or deprecated. Fields between 1% and 50% are conditional — they exist for some record types but not others, and understanding *why* is often the most valuable insight in the entire analysis. A field that appears in 10% of records is not necessarily poorly populated; it may be correctly populated for the 10% of records where it applies.
+
+For tabular data this computation is trivial: count non-nulls per column, divide by total rows. For nested JSON it requires walking each record's tree and accumulating path presence across the full dataset. Both bytefreq and DataRadar support this as a standard operation, producing a table of field paths sorted by population percentage.
+
+The worked examples in this book follow this pattern: every analysis begins with a structure discovery table showing field paths and population percentages, before any mask profiling begins. You cannot profile what you have not found, and you cannot interpret a population rate without knowing the full landscape of fields around it.
+
 Once masks have been generated for every value in a column, the next step is to count them. The resulting frequency table — a list of unique masks and their occurrence counts — is the *population profile* of the column, and it is where the real insight lives.
 
 ## The Power Law of Data
@@ -117,6 +131,24 @@ A separate but related technique is the **population check**, which tests whethe
 Population checks are a basic hygiene measure but surprisingly revealing. A field that is documented as mandatory but shows 15% empty values indicates a data collection problem. A field that was previously 99.5% populated but has dropped to 80% suggests an upstream process change. A field that is 100% populated is either genuinely complete or has been backfilled with placeholders — and the mask profile of that field will tell you which.
 
 When we built our reusable notebook for profiling data in Apache Spark, we included `POPCHECKS` as a standard mask alongside the ASCII high grain and low grain profilers, precisely because population analysis is so consistently useful as a first-pass check. The graphical output — a stacked bar chart showing populated versus missing values per field — is one of those visualisations that instantly tells you the shape of a dataset before you look at a single value.
+
+## Progressive Population
+
+Some fields do not have a fixed population rate — they fill over time. In the French lobbyist registry (HATVP), financial disclosure fields such as expenditure, revenue, and employee count start empty for newly registered organisations and populate progressively as annual reporting periods pass. A field that is 60% populated today may be 80% populated next year — not because data quality improved, but because more reporting periods have elapsed. The data was never missing; it simply did not exist yet.
+
+This means a single population snapshot can be misleading. A field at 40% populated might look sparse, but if the dataset covers five years of registrations and only three years of financial reporting are required, 40% is exactly what you would expect. The population rate must be interpreted in the context of the data's temporal structure. Without that context, you risk raising false alarms about fields that are behaving exactly as designed.
+
+When monitoring population rates over time (as described in the Quality Monitoring chapter), progressive population creates a naturally rising baseline. Distinguishing "population increased because more time has passed" from "population increased because a data collection issue was fixed" requires understanding the business process behind the data. The population profile surfaces the question; domain knowledge answers it. This is a recurring theme in data quality on read: the profiler finds the pattern, but only someone who understands the domain can say whether the pattern is correct.
+
+## Wildcard Profiling
+
+When the same field name appears at multiple levels of a nested structure, we can profile them collectively using a wildcard pattern. A query like `*.Name` gathers every `Name` field regardless of its position in the hierarchy, producing a single combined profile across all matching paths.
+
+In the JMA earthquake data, `Name` appears at multiple nesting levels: `Body.Earthquake.Hypocenter.Area.Name` (the earthquake epicentre region), `Body.Intensity.Observation.Pref.Name` (the prefecture), `Body.Intensity.Observation.Pref.Area.City.Name` (the city), and `Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name` (the individual monitoring station). Profiling `*.Name` collectively reveals whether the same character set and structural patterns are used consistently across all levels — or whether different nesting contexts use different conventions. If station names use Latin characters while prefecture names use kanji, the wildcard profile will show both populations in a single view.
+
+This extends across datasets. If postcodes appear in multiple nested structures — billing address, shipping address, registered office — profiling `*.PostCode` shows all postcodes regardless of context. When the aggregate profile reveals anomalies, you drill into individual paths to localise the issue. The wildcard gives you the overview; the specific path gives you the detail.
+
+Wildcard profiling is particularly powerful for cross-cutting consistency checks: verifying that all date fields across a dataset use the same format, that all name fields share the same casing conventions, or that all identifier fields have the same structural pattern. It turns field-by-field analysis into a dataset-wide consistency check, catching format drift that would be invisible when examining one field at a time.
 
 ## The Two-Pass Workflow
 

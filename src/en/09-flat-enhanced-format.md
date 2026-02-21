@@ -41,6 +41,18 @@ This is important because key-value pairs do not assume a fixed schema. The flat
 
 This pattern originated in the Hadoop era, where the economics were clear: joins across distributed datasets were expensive (network shuffles scaled with data size), while storage was cheap and getting cheaper. Co-locating related information in the same record — rather than normalising into separate tables — eliminated the most costly operation in the pipeline. The pattern persists today in Delta Lake, Iceberg, and other lakehouse architectures, and it underpins the design of feature stores in machine learning, where pre-computed features are stored alongside the raw data so that serving pipelines can retrieve everything in a single read.
 
+## From Nested Input to Flat Output
+
+The previous section showed how bytefreq's output transforms nested quality metadata into flat key-value pairs. But there is an equally important input-side question: how does the profiler handle nested *source* data? When the input is deeply nested JSON — not a flat CSV — the profiler must first discover the structure before it can profile the values.
+
+bytefreq walks the JSON tree of each record, generating dot-notation paths for every leaf value. A six-level-deep field in the JMA earthquake data becomes `Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name`. An array produces one path per element, with the array items treated as repeated instances of the same path. The result is a flat inventory of field paths — the structure discovery step described in Chapter 6.
+
+This flattening is not a lossy transformation for profiling purposes. The dot-notation path preserves the nesting hierarchy: you can always reconstruct where a field sits in the original structure by reading its path. And because the path is just a string, it can be used as a key for grouping, filtering, and wildcard queries (`*.Name`, `*.PostCode`).
+
+The input flattening and the output flattening are conceptually the same operation applied at different stages. On input, nested source data is flattened into field paths for profiling. On output, nested quality metadata is flattened into key-value pairs for consumption. The flat enhanced format is the common representation at both ends of the pipeline.
+
+This means bytefreq can accept CSV, JSON (including deeply nested), Parquet, and Excel as input, and produce the same flat enhanced output regardless of the source format. The input format determines how field paths are discovered; the output format is always the same flattened key-value pair schema. The profiler abstracts away the structural complexity of the source and presents a uniform interface to downstream consumers.
+
 ## The Column Structure
 
 For each field in the original data, the flat enhanced format produces a family of parallel columns:
