@@ -33,4 +33,5 @@
 [Getting Started](./getting-started.md)
 [Worked Example: Profiling UK Companies House Data](./worked-example-companies-house.md)
 [Worked Example: Profiling JMA Earthquake Data](./worked-example-jma-earthquake.md)
+[Worked Example: Profiling the French Lobbyist Registry](./worked-example-hatvp-lobbyists.md)
 [About the Author](./about.md)
