@@ -31,4 +31,5 @@
 [Conclusion](./conclusion.md)
 [Glossary](./glossary.md)
 [Getting Started](./getting-started.md)
+[Worked Example: Profiling UK Companies House Data](./worked-example-companies-house.md)
 [About the Author](./about.md)
