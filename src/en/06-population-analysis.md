@@ -66,6 +66,29 @@ This is **management by exception** applied to data quality. Rather than reviewi
 
 The masks below the cliff point become a structured work list. For each one, the question is the same: does this pattern represent a new assertion rule that the profiler should learn, or a treatment function that downstream consumers need? A mask like `99-99-9999` appearing twelve times in a column of `9999-99-99` dates might indicate an American-format date that needs a treatment function to reorder the components. A mask like `AAAA` appearing three times might be the string `NULL` written literally, needing a rule to flag it as a placeholder. Each exception either produces a new rule, a new treatment, or a documented decision to accept the anomaly — and the cliff point is what surfaced it for review in the first place.
 
+### A Real Example: Address Numbers in OpenAddresses
+
+To see the cliff point in practice, consider a real profiling run against 190,493 address records from the OpenAddresses project (a mix of Japanese and Faroese addresses). The `properties.number` field — the street number — produces the following LU mask frequency table:
+
+```
+Mask        Count      %       % of Previous    
+"9-9"     161,668   84.9%          —            
+"9"        24,538   12.9%        15.2%          
+"a9-9"      2,784    1.5%        11.3%          
+"9A"        1,139    0.6%        40.9%          
+"9a-9"        177    0.1%        15.5%    ← cliff point
+"9a9-9"       155    0.1%        87.6%          
+"a-9"          17    0.0%        11.0%          
+"a9a9-9"       12    0.0%        70.6%          
+"a9a-9"         3    0.0%        25.0%          
+```
+
+The first four masks account for 99.9% of the data, and the percentage-of-previous ratio stays in the 11-41% range — a steady power law decline. Then between `"9A"` (1,139 occurrences) and `"9a-9"` (177 occurrences), the count drops by a factor of six. The percentage-of-previous is 15.5%, which on its own looks similar to earlier ratios — but the *absolute* count has crossed from four digits to three. This is the cliff.
+
+Below the cliff, we find 177 records with pattern `"9a-9"` (example: `"2334ｲ-1"` — a number containing a half-width katakana character), 17 records matching `"a-9"` (example: `"又又-1"` — CJK characters used as a number prefix), and 3 records with `"a9a-9"`. These are not errors in the traditional sense — they are legitimate Japanese addressing conventions — but they are *structural exceptions* that a downstream consumer parsing street numbers as digits would need to handle differently.
+
+The cliff point here does exactly what it should: it separates the four dominant patterns that any consumer can handle with basic logic from the five rare patterns that need specialist treatment or explicit acknowledgement.
+
 In practice, the cliff point is not always a single dramatic drop. Some columns have a gradual slope with no obvious cliff — these are columns with genuine structural diversity (free-text fields, for example) where management by exception is less useful. Others have a razor-sharp cliff after the second or third mask, where 99% of the data conforms to two or three formats and everything else is noise. The clarity of the cliff point is itself diagnostic: a sharp cliff means the column has strong structural conventions; a gentle slope means it does not.
 
 ## Population Checks

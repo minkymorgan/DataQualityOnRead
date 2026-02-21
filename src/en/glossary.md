@@ -18,6 +18,8 @@ This glossary defines the key technical terms used throughout this book. In tran
 
 **data quality on read (DQOR)** — An architecture principle where data quality profiling, validation, and remediation are deferred until the moment of consumption, rather than applied at ingest time. A parallel to *schema on read*.
 
+**cliff point** — The point in a sorted mask frequency table where the percentage-of-previous-mask drops sharply, separating expected patterns from rare exceptions. Used for management by exception: masks above the cliff are normal operations; masks below it form a review queue for potential new assertion rules or treatment functions.
+
 **data quality profiling (DQ)** — The default report mode in bytefreq and DataRadar. Generates mask frequency tables for each column, showing structural patterns and their occurrence counts.
 
 **exclusion list** — A list of masks that are known to be problematic for a given column. Values whose masks match the exclusion list are flagged as errors. Compare with *allow list*.
