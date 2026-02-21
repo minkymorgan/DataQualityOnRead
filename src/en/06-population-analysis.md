@@ -38,6 +38,36 @@ From the population profile, several metrics are worth computing:
 
 **Rare mask frequency** identifies masks appearing fewer than N times, or below some percentage threshold of the total population. These are the candidates for investigation. They might be data entry errors, format migrations (records from an old system using a different format), encoding problems, or legitimate edge cases. The threshold is domain-dependent — in a million-row dataset, a mask appearing 10 times is probably an anomaly, while in a thousand-row dataset it might represent 1% of the data and be a genuine format variant.
 
+## Finding the Cliff Point
+
+The metrics above — coverage, mask cardinality, rare mask frequency — describe the shape of the distribution, but they do not tell you where to draw the line between "normal" and "investigate." The **cliff point** does.
+
+Take the sorted mask frequency table and calculate one additional column: the **percentage of previous mask**. For each mask in the list, divide its count by the count of the mask immediately above it. The first mask has no predecessor, so start with the second.
+
+Returning to our phone number example:
+
+```
+Mask                    Count     % of Previous
+99999 999999          812,000         —
++99 9999 999999        95,000       11.7%
+9999 999 9999          42,000       44.2%
+(999) 999-9999         31,000       73.8%
+aaaa                   12,000       38.7%
+99999999999             4,200       35.0%
+Aaaa aaa Aaaa           2,100       50.0%
+(other)                 1,700       81.0%
+```
+
+Walking down the list, look at how the percentage-of-previous behaves. From position two onwards, the ratios are relatively stable — each mask is some reasonable fraction of the one above it, reflecting the gradual decline you would expect in a power law distribution. But in many real-world columns, there is a point where this ratio drops sharply. The count might go from 12,000 to 400 — a percentage-of-previous of 3.3% — where the preceding steps were in the 30-70% range.
+
+That sharp drop is the **cliff point**. Everything above it is part of the expected population — patterns that are either correct or wrong in ways you have already accounted for. Everything below it is the exception zone: masks so rare relative to the population above them that they warrant individual inspection.
+
+This is **management by exception** applied to data quality. Rather than reviewing every mask in a column, the cliff point tells you where to focus your attention. Above the cliff: normal operations. Below the cliff: the review queue.
+
+The masks below the cliff point become a structured work list. For each one, the question is the same: does this pattern represent a new assertion rule that the profiler should learn, or a treatment function that downstream consumers need? A mask like `99-99-9999` appearing twelve times in a column of `9999-99-99` dates might indicate an American-format date that needs a treatment function to reorder the components. A mask like `AAAA` appearing three times might be the string `NULL` written literally, needing a rule to flag it as a placeholder. Each exception either produces a new rule, a new treatment, or a documented decision to accept the anomaly — and the cliff point is what surfaced it for review in the first place.
+
+In practice, the cliff point is not always a single dramatic drop. Some columns have a gradual slope with no obvious cliff — these are columns with genuine structural diversity (free-text fields, for example) where management by exception is less useful. Others have a razor-sharp cliff after the second or third mask, where 99% of the data conforms to two or three formats and everything else is noise. The clarity of the cliff point is itself diagnostic: a sharp cliff means the column has strong structural conventions; a gentle slope means it does not.
+
 ## Population Checks
 
 A separate but related technique is the **population check**, which tests whether each field is populated or empty. This is implemented as a special mask that returns `1` if a field contains a value and `0` if it is null or empty. When aggregated, it produces a per-field population percentage.
