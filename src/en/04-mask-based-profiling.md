@@ -32,6 +32,19 @@ Very quickly, the mask reduces thousands of unique domain names down to a short 
 
 There is a mask — `AAA Aa` — that does not contain a dot, which we would expect in any domain name. This immediately stands out as structurally different from the rest. When we use the mask to retrieve the original values, we find the text `BBC Monitoring` — not a domain name at all, but a general descriptor that someone has used in a field designed for domain names. In re-reading the GDELT documentation we discover that this is not an error but a known special case, meaning when we use this field we must handle it. Perhaps we include a correction rule to swap the string for the valid domain `www.monitor.bbc.co.uk`, which is the actual source.
 
+A second example, from real UK Companies House data, shows what happens when a field contains data from the wrong column entirely. The `RegAddress.PostTown` field — the registered office town — produces dozens of masks at LU grain. The dominant patterns are all legitimate town names: `A` (single words like `READING`, 84.2%), `A A` (two words like `HEBDEN BRIDGE`, 6.3%), and several hyphenated or abbreviated forms. But in the long tail:
+
+```
+Mask        Count   Example
+A9 9A          14   EH47 8PG
+9 A A          32   150 HOLYWOOD ROAD
+9-9 A A        10   1-7 KING STREET
+9A A            1   2ND FLOOR
+9               2   20037
+```
+
+Postcodes in the town field. Street addresses in the town field. A US ZIP code. A floor number. The masks expose column misalignment that no town-name validation rule would detect — because `EH47 8PG` is a perfectly valid string, just in the wrong column. The mask `A9 9A` in a town field is diagnostic: towns do not have that structure, but postcodes do. (For the complete field-by-field analysis of this dataset, see the Worked Example: Profiling UK Companies House Data appendix.)
+
 The idea we are introducing here is that a mask can be used as a *key* to retrieve records of a particular structural type from a particular field. Before we explore that idea further (it leads directly to the concept of masks as error codes, covered in Chapter 7), it is worth understanding the mechanics of the mask itself in more detail.
 
 ## Why Masks Work
@@ -53,6 +66,18 @@ Consider a customer name column:
 | `N/A` | `A/A` |
 
 From the masks alone, without looking at the values, we can see: most records are capitalised names (`Aaaa Aaaaa`), some are in all-caps or all-lowercase (normalisation candidates), some contain apostrophes or hyphens (legitimate but structurally distinct), one is numeric (almost certainly an error — a customer ID in a name field), and one is a placeholder. The mask gives us a *classification of structural types* in a single pass.
+
+A worked example from the French lobbyist registry illustrates this vividly. The first name field (`dirigeants.prenom`) produces four masks at LU grain:
+
+```
+Mask        Count   Example
+Aa            697   Carole
+Aa-Aa          50   Marc-Antoine
+Aa Aa          11   Marie Christine
+Aa_a            1   Ro!and
+```
+
+The first three are expected: simple names, hyphenated compounds (common in French), and space-separated compounds. The fourth is the standout: `Aa_a` — one record where `Ro!and` contains an exclamation mark where the letter `l` should be. The intended name is `Roland`, but a data entry error has replaced a letter with adjacent punctuation. No schema would catch this — the field is a valid string. No length check would catch it — six characters is reasonable. But the mask catches it instantly because `!` is punctuation, not a letter, and the structural pattern is fundamentally different from every other value in the field. (For the full analysis, see the Worked Example: Profiling the French Lobbyist Registry appendix.)
 
 ## Prototyping on the Command Line
 

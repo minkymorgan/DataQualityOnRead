@@ -32,6 +32,8 @@ a              → single lowercase character
 aaaa://aaa.aaa → URL in a name field
 ```
 
+This is not a theoretical exercise. In the UK Companies House profiling (see the Worked Example appendix), the `RegAddress.PostCode` field at LU grain produces just two dominant masks — `A9 9A` (88.3%, e.g. `L23 0RG`) and `A9A 9A` (7.3%, e.g. `W1W 7LT`) — which together cover all six standard UK postcode formats when expanded at HU grain. These two masks plus the empty value (4.4%) account for 99.96% of the data. An allow list of `{A9 9A, A9A 9A, (empty)}` at LU grain would instantly flag the remaining 0.04% — records containing missing spaces (`GU478QN`), trailing punctuation (`BR7 5HF.`), embedded semicolons (`L;N9 6NE`), and values that are not postcodes at all (`BLOCK 3`, `2L ONE`). The allow list is three entries. The error detection is comprehensive.
+
 In practice, allow lists are more useful for format-controlled fields (postcodes, phone numbers, dates, identifiers) where the set of valid patterns is finite and known. Exclusion lists are more useful for free-text fields where the valid patterns are diverse but certain structural types are reliably wrong.
 
 ## Building Quality Gates
@@ -42,6 +44,8 @@ The combination of population analysis and mask-based error codes creates a natu
 2. **Compare each mask against the allow list** (or exclusion list) for that column.
 3. **Check population thresholds** — is the proportion of "good" masks above the minimum acceptable level? Has a previously rare "bad" mask suddenly increased in frequency?
 4. **Route errors by mask** — different masks may require different handling. A placeholder (`A/A`) might be replaced with a null. An all-caps name (`AAAA AAAAA`) might be normalised to title case. A numeric value in a name field (`99999`) might be quarantined for manual review.
+
+The French lobbyist registry provides a concrete example of routing by mask. The director's role field (`dirigeants.fonction`) produces masks that reveal three casing conventions in use: `Aa Aa` for title case (`Directeur Général`, 92 records), `Aa a` for French grammatical case (`Directeur général`, 74 records), and `A A` for uppercase (`DIRECTEUR GENERAL`, 29 records). A quality gate on this field would not flag any of these as errors — they are all valid role descriptions. But it would route each casing variant to a normalisation function, ensuring that downstream analytics do not create three separate categories for what is semantically the same role. The mask is not just an error detector; it is a router. (See the Worked Example: Profiling the French Lobbyist Registry appendix.)
 
 The quality gate can run automatically on every new batch of data, providing a continuous structural health check. When the profile of incoming data drifts — a new mask appears that was not seen before, or the population of a known-bad mask increases — the gate flags it for investigation.
 

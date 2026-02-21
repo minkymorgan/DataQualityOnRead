@@ -14,7 +14,19 @@ The distinction matters because the two grain levels serve different purposes.
 
 **Low grain** is the tool for discovery. When you first encounter an unfamiliar dataset and want to understand the structural families present in a column, low grain masking collapses millions of unique values into a handful of patterns. A name column that produces thousands of unique high grain masks (varying by name length) might produce only four or five low grain masks: `Aa Aa` (first name, last name), `Aa A. Aa` (with middle initial), `Aa` (single name), `9` (numeric — investigate), and `A/A` (placeholder). This immediate simplification makes the data comprehensible at a glance.
 
+The effect is dramatic with non-Latin scripts. When profiling Japanese earthquake data from JMA, the hypocenter name field — containing kanji place names of varying length and composition — collapses entirely to a single mask at LU grain:
+
+```
+Mask    Count   Example
+a          78   福島県会津
+a_a         1   (compound name with punctuation)
+```
+
+78 of 79 values produce the same mask: `a`. Every CJK ideograph is classified as a lowercase letter (Unicode category Lo), and low grain collapses consecutive characters of the same class. A four-character name and an eight-character name are structurally identical at this grain. That one exception — `a_a`, a name containing a punctuation separator — stands out immediately. At HU grain, these 78 records would produce dozens of distinct masks varying by character count. At LU grain, you see the structural family at a glance. (See the Worked Example: Profiling JMA Earthquake Data appendix for the full analysis.)
+
 **High grain** is the tool for precision. Once you have identified the structural families using low grain, you can drill into a specific family with high grain masking to see the exact formats. For a postcode column, low grain might tell you that most values match `AA9 9AA` (low grain: `A9 9A`). High grain will tell you that you have `AA99 9AA`, `A99 9AA`, `A9 9AA`, `AA9 9AA`, and `AA9A 9AA` — the five standard UK postcode formats — each with its own frequency, allowing you to verify completeness and detect anomalies.
+
+A subtler example of when HU grain is needed comes from the French lobbyist registry. The title field (`dirigeants.civilite`) contains `M` (Monsieur) and `MME` (Madame). At LU grain, both collapse to `A` — a single mask covering all 760 values, suggesting perfect uniformity. At HU grain, `M` produces `A` and `MME` produces `AAA`, cleanly separating the two populations. The LU profile tells you the field is consistently alphabetic. The HU profile tells you there are exactly two formats and what they are. The choice of grain determines the question you are answering. (See the Worked Example: Profiling the French Lobbyist Registry appendix.)
 
 The typical workflow is a two-pass approach: start with low grain to survey the landscape, then switch to high grain to examine specific areas of interest. This mirrors how experienced data engineers actually work — broad scan first, targeted investigation second — and the two grain levels formalise that workflow into the tool.
 
