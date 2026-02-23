@@ -34,4 +34,5 @@
 [Worked Example: Profiling UK Companies House Data](./worked-example-companies-house.md)
 [Worked Example: Profiling JMA Earthquake Data](./worked-example-jma-earthquake.md)
 [Worked Example: Profiling the French Lobbyist Registry](./worked-example-hatvp-lobbyists.md)
+[Worked Example: Profiling PubMed XML — International Biomedical Literature](./worked-example-pubmed-xml.md)
 [About the Author](./about.md)
