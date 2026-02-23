@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Why Data Quality Still Breaks Things - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/01-why-data-quality-still-breaks-things.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="why-data-quality-still-breaks-things"><a class="header" href="#why-data-quality-still-breaks-things">Why Data Quality Still Breaks Things</a></h1>
+<p>There is a widely cited statistic that poor data quality costs organisations between 15 and 25 percent of revenue. The number has been repeated so often that it has become background noise, the kind of thing people nod at in presentations and then promptly ignore when scoping their next project. The reason it persists, despite everyone knowing about it, is structural: most data quality problems are invisible until they cause a failure downstream, and by then the cost of remediation is orders of magnitude higher than the cost of early detection.</p>
+<p>Consider a simple example. A retail company receives a daily feed of product catalogue updates from a supplier. The feed is a CSV file, delivered via SFTP, containing product codes, descriptions, prices, and stock levels. The specification says prices are in GBP, formatted as decimal numbers with two decimal places. For six months the feed arrives on time, the prices parse correctly, and everyone is happy. Then one Monday the supplier's system is upgraded, and the price field starts arriving with a currency symbol prefix — <code>£12.99</code> instead of <code>12.99</code>. The downstream pricing engine, which casts the field to a numeric type, throws a parse error. The product catalogue goes stale. Customer-facing prices are wrong for four hours until someone notices and writes a hotfix.</p>
+<p>The fix takes ten minutes. The investigation takes two hours. The post-incident review takes half a day. The customer complaints take a week to resolve. The root cause was a single character in a single field, and the total cost — in engineering time, reputational damage, and operational disruption — was wildly disproportionate to the simplicity of the underlying issue.</p>
+<p>This pattern repeats across every industry that depends on data received from sources it does not control. The specific failures vary — date formats flip between <code>DD/MM/YYYY</code> and <code>MM/DD/YYYY</code>, encoding shifts from UTF-8 to Latin-1, a column that was always numeric starts containing the string <code>NULL</code> instead of an actual null — but the shape of the problem is always the same. Data that was assumed to be clean turns out not to be, and the assumption is only tested at the point of failure.</p>
+<h2 id="the-read-problem"><a class="header" href="#the-read-problem">The Read Problem</a></h2>
+<p>Most data quality tooling is designed around the assumption that you control the data pipeline end to end. Schema validation at the point of entry, constraint enforcement in the database, type checking in the application layer — these are all "quality on write" techniques, and they work well when you are the author of the data. The difficulty arises when you are the <em>reader</em> rather than the writer.</p>
+<p>In modern data architectures, the proportion of data that arrives from sources you do not control is substantial and growing. Third-party feeds, partner integrations, open data portals, scraped web content, legacy system exports, IoT sensor streams, and API responses from services maintained by other teams — all of these represent data that was created according to someone else's assumptions, documented (if at all) according to someone else's standards, and delivered with whatever level of quality the source system happened to produce that day.</p>
+<p>You cannot fix the source. In many cases you cannot even influence it. What you can do is understand what you have received, quickly and cheaply, before you attempt to use it. That understanding — structural, not semantic — is the domain of Data Quality on Read.</p>
+<h2 id="what-goes-wrong"><a class="header" href="#what-goes-wrong">What Goes Wrong</a></h2>
+<p>In working with data platforms across financial services, telecoms, government, and open data projects, we have seen the same categories of data quality failure appear repeatedly. They are worth enumerating because they inform the design of the profiling techniques that follow.</p>
+<p><strong>Format inconsistency</strong> is the most common. A date column contains values in three or four different formats — <code>2024-01-15</code>, <code>15/01/2024</code>, <code>Jan 15 2024</code>, and occasionally just <code>2024</code> — because the upstream system aggregated data from multiple sources without normalising it. A phone number column mixes UK mobile (<code>07700 900123</code>), international (<code>+44 7700 900123</code>), US (<code>(555) 123-4567</code>), and free-text entries like <code>"ask for Dave"</code>. Each of these is individually valid; the problem is that they coexist in the same column with no indicator of which format applies to which record.</p>
+<p><strong>Encoding corruption</strong> is subtler and often goes undetected for longer. A file that was encoded in Latin-1 is read as UTF-8, producing garbled characters in names and addresses. A BOM marker at the start of a CSV causes the first column header to parse incorrectly. Control characters — tabs, carriage returns, null bytes — appear in fields that should contain only printable text, breaking downstream parsers that assumed simple delimited input.</p>
+<p><strong>Structural drift</strong> happens when the shape of the data changes over time without corresponding updates to the documentation or the downstream systems that consume it. A new column is added to a feed, shifting all subsequent field positions. An optional field starts being populated where it was previously always empty, triggering unexpected code paths. A field that was always a single value starts containing comma-separated lists.</p>
+<p><strong>Placeholder abuse</strong> is endemic. The strings <code>N/A</code>, <code>NULL</code>, <code>none</code>, <code>n/a</code>, <code>-</code>, <code>TBC</code>, <code>unknown</code>, <code>test</code>, and the empty string all appear in production data as substitutes for missing values, each encoded differently, each requiring different handling, and none of them matching the expected format of the field they occupy. In one government dataset we profiled, the placeholder <code>REDACTED</code> appeared in the postcode field of 3% of records, which was useful to know before attempting geocoding.</p>
+<p><strong>Population shifts</strong> are the hardest to detect without profiling. The data looks structurally correct — all the fields parse, all the types are right — but the distribution has changed. A column that previously had 99.5% population now has 15% nulls because an upstream collection process was turned off. A field that used to contain 8 distinct values now contains 47, because a system migration expanded the code set without updating the documentation.</p>
+<p>None of these problems are exotic. They are the ordinary, everyday reality of working with data that someone else created. The question is not whether they exist in your data — they almost certainly do — but whether you have a systematic way of finding them before they cause harm.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="02-the-limits-of-traditional-approaches.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="02-the-limits-of-traditional-approaches.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

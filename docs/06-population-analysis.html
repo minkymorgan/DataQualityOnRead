@@ -1,0 +1,321 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Population Analysis - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/06-population-analysis.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="population-analysis"><a class="header" href="#population-analysis">Population Analysis</a></h1>
+<h2 id="structure-discovery-the-step-before-profiling"><a class="header" href="#structure-discovery-the-step-before-profiling">Structure Discovery: The Step Before Profiling</a></h2>
+<p>Before you profile the values in a field, you need to know what fields exist and how populated they are. This is structure discovery — the census before the survey. It answers the most basic question about a dataset: what is actually here?</p>
+<p>For tabular data — CSV files, fixed-width extracts, database tables — structure discovery means counting non-null values per column. In the UK Companies House dataset (55 columns, 100,000 records), this immediately reveals that <code>DissolutionDate</code> is 0% populated (the extract contains only active companies), that the four <code>SICCode</code> columns cascade from 100% down to 2% (most companies register one industry code; very few register four), and that the <code>PreviousName</code> columns cascade from 11.5% to 0% (most companies have never changed their name, and almost none have changed it ten times). These are significant findings before a single mask is generated.</p>
+<p>For nested JSON, structure discovery means walking the tree to find all unique field paths and counting how many records contain each. In the JMA earthquake data (80 events, 2,433 station observations), the field <code>Head.Headline.Information</code> appears in only 10% of records — indicating it is reserved for significant earthquakes that warrant a headline. The field <code>Body.Earthquake.Hypocenter.Area.DetailedName</code> appears at 0% in the sampled data, suggesting it is either deprecated or reserved for a specificity level that none of the sampled events triggered. The structure itself is the first finding.</p>
+<p>The population profile of field paths creates a map of the dataset. Fields at 100% are the backbone — they appear in every record and define the core structure. Fields at 0% are dormant or deprecated. Fields between 1% and 50% are conditional — they exist for some record types but not others, and understanding <em>why</em> is often the most valuable insight in the entire analysis. A field that appears in 10% of records is not necessarily poorly populated; it may be correctly populated for the 10% of records where it applies.</p>
+<p>For tabular data this computation is trivial: count non-nulls per column, divide by total rows. For nested JSON it requires walking each record's tree and accumulating path presence across the full dataset. Both bytefreq and DataRadar support this as a standard operation, producing a table of field paths sorted by population percentage.</p>
+<p>The worked examples in this book follow this pattern: every analysis begins with a structure discovery table showing field paths and population percentages, before any mask profiling begins. You cannot profile what you have not found, and you cannot interpret a population rate without knowing the full landscape of fields around it.</p>
+<p>Once masks have been generated for every value in a column, the next step is to count them. The resulting frequency table — a list of unique masks and their occurrence counts — is the <em>population profile</em> of the column, and it is where the real insight lives.</p>
+<h2 id="the-power-law-of-data"><a class="header" href="#the-power-law-of-data">The Power Law of Data</a></h2>
+<p>In practice, most columns in structured data follow a power law distribution when profiled by masks. A small number of masks (typically one to three) account for 80 to 95 percent of all values, representing the "expected" formats. A long tail of rare masks accounts for the remainder, representing anomalies, edge cases, errors, and format variations that the documentation did not mention.</p>
+<p>The dominant masks tell you what the column is <em>supposed</em> to contain. The long tail tells you what has gone wrong, what has drifted, or what was never documented in the first place. The population profile is, in effect, a structural census of the column.</p>
+<h2 id="reading-a-population-profile"><a class="header" href="#reading-a-population-profile">Reading a Population Profile</a></h2>
+<p>Consider a phone number column with one million rows. After masking at high grain, the population profile might look like this:</p>
+<pre><code>Mask                    Count      %       Cumulative
+99999 999999          812,000   81.2%       81.2%
++99 9999 999999        95,000    9.5%       90.7%
+9999 999 9999          42,000    4.2%       94.9%
+(999) 999-9999         31,000    3.1%       98.0%
+aaaa                   12,000    1.2%       99.2%
+99999999999             4,200    0.4%       99.6%
+Aaaa aaa Aaaa           2,100    0.2%       99.8%
+(other)                 1,700    0.2%      100.0%
+</code></pre>
+<p>This single view tells us more about the phone number column than any schema definition could. We can see that the dominant format is UK mobile (<code>99999 999999</code>, 81.2%), with significant minorities of international numbers, UK landlines, and US-formatted numbers. We can see that 1.2% of values are alphabetic — likely the strings <code>null</code>, <code>none</code>, or similar placeholders masking as <code>aaaa</code>. We can see 0.2% of values that look like names (<code>Aaaa aaa Aaaa</code>), almost certainly data in the wrong field. And we can see that the format without spaces (<code>99999999999</code>) is present but relatively rare, suggesting it might be a data entry variant rather than an error.</p>
+<p>None of this required writing a single regex. None of it required a schema. The profiler generated the structural census mechanically, and the interpretation is immediate to anyone who can read the mask notation.</p>
+<h2 id="key-metrics"><a class="header" href="#key-metrics">Key Metrics</a></h2>
+<p>From the population profile, several metrics are worth computing:</p>
+<p><strong>Coverage</strong> measures what percentage of values match the top N masks. If the top mask covers 99.9% of values, the column is structurally uniform and easy to process. If the top mask covers only 40%, the column contains significant structural diversity and will require more complex handling. Coverage is a quick indicator of how much work a column will create downstream.</p>
+<p><strong>Mask cardinality</strong> counts the number of distinct masks in the column. A well-formed date column might have one or two masks. A free-text name field might have hundreds. High mask cardinality suggests either legitimate diversity (names vary in length and format) or structural chaos (multiple unrelated data types in the same column). The distinction is usually obvious from the masks themselves. Note that columns containing non-Latin scripts (as discussed in Chapter 5) tend to have higher mask cardinality at high grain, because CJK, Arabic, and Cyrillic names vary in length just as Latin names do — the structural diversity is real, not an error.</p>
+<p><strong>Rare mask frequency</strong> identifies masks appearing fewer than N times, or below some percentage threshold of the total population. These are the candidates for investigation. They might be data entry errors, format migrations (records from an old system using a different format), encoding problems, or legitimate edge cases. The threshold is domain-dependent — in a million-row dataset, a mask appearing 10 times is probably an anomaly, while in a thousand-row dataset it might represent 1% of the data and be a genuine format variant.</p>
+<h2 id="finding-the-cliff-point"><a class="header" href="#finding-the-cliff-point">Finding the Cliff Point</a></h2>
+<p>The metrics above — coverage, mask cardinality, rare mask frequency — describe the shape of the distribution, but they do not tell you where to draw the line between "normal" and "investigate." The <strong>cliff point</strong> does.</p>
+<p>Take the sorted mask frequency table and calculate one additional column: the <strong>percentage of previous mask</strong>. For each mask in the list, divide its count by the count of the mask immediately above it. The first mask has no predecessor, so start with the second.</p>
+<p>Returning to our phone number example:</p>
+<pre><code>Mask                    Count     % of Previous
+99999 999999          812,000         —
++99 9999 999999        95,000       11.7%
+9999 999 9999          42,000       44.2%
+(999) 999-9999         31,000       73.8%
+aaaa                   12,000       38.7%
+99999999999             4,200       35.0%
+Aaaa aaa Aaaa           2,100       50.0%
+(other)                 1,700       81.0%
+</code></pre>
+<p>Walking down the list, look at how the percentage-of-previous behaves. From position two onwards, the ratios are relatively stable — each mask is some reasonable fraction of the one above it, reflecting the gradual decline you would expect in a power law distribution. But in many real-world columns, there is a point where this ratio drops sharply. The count might go from 12,000 to 400 — a percentage-of-previous of 3.3% — where the preceding steps were in the 30-70% range.</p>
+<p>That sharp drop is the <strong>cliff point</strong>. Everything above it is part of the expected population — patterns that are either correct or wrong in ways you have already accounted for. Everything below it is the exception zone: masks so rare relative to the population above them that they warrant individual inspection.</p>
+<p>This is <strong>management by exception</strong> applied to data quality. Rather than reviewing every mask in a column, the cliff point tells you where to focus your attention. Above the cliff: normal operations. Below the cliff: the review queue.</p>
+<p>The masks below the cliff point become a structured work list. For each one, the question is the same: does this pattern represent a new assertion rule that the profiler should learn, or a treatment function that downstream consumers need? A mask like <code>99-99-9999</code> appearing twelve times in a column of <code>9999-99-99</code> dates might indicate an American-format date that needs a treatment function to reorder the components. A mask like <code>AAAA</code> appearing three times might be the string <code>NULL</code> written literally, needing a rule to flag it as a placeholder. Each exception either produces a new rule, a new treatment, or a documented decision to accept the anomaly — and the cliff point is what surfaced it for review in the first place.</p>
+<h3 id="a-real-example-uk-postcodes-in-companies-house-data"><a class="header" href="#a-real-example-uk-postcodes-in-companies-house-data">A Real Example: UK Postcodes in Companies House Data</a></h3>
+<p>To see the cliff point in practice, consider a real profiling run against 100,000 company records from the UK Companies House public dataset. The <code>RegAddress.PostCode</code> field — the registered office postcode — produces the following HU mask frequency table:</p>
+<pre><code>Mask              Count      %       % of Previous
+AA9 9AA          38,701   38.4%          —
+AA99 9AA         35,691   35.4%        92.2%
+A99 9AA           7,900    7.8%        22.1%
+A9 9AA            5,956    5.9%        75.4%
+AA9A 9AA          5,378    5.3%        90.3%
+(empty)           4,367    4.3%        81.2%
+A9A 9AA           1,967    2.0%        45.0%
+AA999AA               7    0.0%         0.4%    ← cliff point
+AA99AA                5    0.0%        71.4%
+99 999                2    0.0%        40.0%
+9999                  2    0.0%       100.0%
+A9   9AA              2    0.0%       100.0%
+AA9 9AA.              2    0.0%       100.0%
+AA99 9 AA             1    0.0%        50.0%
+A99A 9AA              1    0.0%       100.0%
+AAAAA 9               1    0.0%       100.0%
+...and 14 more singletons
+</code></pre>
+<p>The first seven rows — the five standard UK postcode formats (<code>AA9 9AA</code>, <code>AA99 9AA</code>, <code>A99 9AA</code>, <code>A9 9AA</code>, <code>AA9A 9AA</code>), empty values, and the sixth format (<code>A9A 9AA</code>) — account for 99.96% of all records. The percentage-of-previous ratios in this zone are all between 22% and 92%, reflecting the natural variation in how common each postcode format is.</p>
+<p>Then between <code>A9A 9AA</code> (1,967 records) and <code>AA999AA</code> (7 records), the count drops from nearly two thousand to single digits. The percentage-of-previous plummets to <strong>0.4%</strong>. That is the cliff.</p>
+<p>Below the cliff, every mask is a data quality issue worth inspecting:</p>
+<ul>
+<li><code>AA999AA</code> and <code>AA99AA</code> — valid formats with the space missing (<code>GU478QN</code>, <code>CH71ES</code>). Treatment: insert the space.</li>
+<li><code>99 999</code> — a numeric value (<code>20 052</code>), clearly not a UK postcode. Likely a foreign postal code or data in the wrong field.</li>
+<li><code>A9   9AA</code> — extra spaces (<code>M2 2EE...</code>), with trailing dots. Treatment: normalise whitespace, strip trailing punctuation.</li>
+<li><code>AA9 9AA.</code> — trailing full stop (<code>BR7 5HF.</code>). Treatment: strip punctuation.</li>
+<li><code>AA99 9 AA</code> — extra space in the outward code (<code>SW18 4 UH</code>). Treatment: normalise to standard format.</li>
+<li><code>AAAAA 9</code> — not a postcode at all (<code>BLOCK 3</code>). An address fragment in the wrong field.</li>
+<li><code>A_A9 9AA</code> — contains a semicolon (<code>L;N9 6NE</code>). Data entry error; likely <code>LN9 6NE</code>.</li>
+<li><code>9A AAA</code> — inverted format (<code>2L ONE</code>). Not a postcode.</li>
+</ul>
+<p>Each exception below the cliff either produces a treatment function (strip the trailing dot, normalise spacing, insert the missing space) or a flag for manual review (the numeric values, the <code>BLOCK 3</code>, the inverted formats). The cliff point surfaced all of them mechanically, without writing a single postcode-specific validation rule.</p>
+<p>In practice, the cliff point is not always a single dramatic drop. Some columns have a gradual slope with no obvious cliff — these are columns with genuine structural diversity (free-text fields, for example) where management by exception is less useful. Others have a razor-sharp cliff after the second or third mask, where 99% of the data conforms to two or three formats and everything else is noise. The clarity of the cliff point is itself diagnostic: a sharp cliff means the column has strong structural conventions; a gentle slope means it does not.</p>
+<h2 id="population-checks"><a class="header" href="#population-checks">Population Checks</a></h2>
+<p>A separate but related technique is the <strong>population check</strong>, which tests whether each field is populated or empty. This is implemented as a special mask that returns <code>1</code> if a field contains a value and <code>0</code> if it is null or empty. When aggregated, it produces a per-field population percentage.</p>
+<p>Population checks are a basic hygiene measure but surprisingly revealing. A field that is documented as mandatory but shows 15% empty values indicates a data collection problem. A field that was previously 99.5% populated but has dropped to 80% suggests an upstream process change. A field that is 100% populated is either genuinely complete or has been backfilled with placeholders — and the mask profile of that field will tell you which.</p>
+<p>When we built our reusable notebook for profiling data in Apache Spark, we included <code>POPCHECKS</code> as a standard mask alongside the ASCII high grain and low grain profilers, precisely because population analysis is so consistently useful as a first-pass check. The graphical output — a stacked bar chart showing populated versus missing values per field — is one of those visualisations that instantly tells you the shape of a dataset before you look at a single value.</p>
+<h2 id="progressive-population"><a class="header" href="#progressive-population">Progressive Population</a></h2>
+<p>Some fields do not have a fixed population rate — they fill over time. In the French lobbyist registry (HATVP), financial disclosure fields such as expenditure, revenue, and employee count start empty for newly registered organisations and populate progressively as annual reporting periods pass. A field that is 60% populated today may be 80% populated next year — not because data quality improved, but because more reporting periods have elapsed. The data was never missing; it simply did not exist yet.</p>
+<p>This means a single population snapshot can be misleading. A field at 40% populated might look sparse, but if the dataset covers five years of registrations and only three years of financial reporting are required, 40% is exactly what you would expect. The population rate must be interpreted in the context of the data's temporal structure. Without that context, you risk raising false alarms about fields that are behaving exactly as designed.</p>
+<p>When monitoring population rates over time (as described in the Quality Monitoring chapter), progressive population creates a naturally rising baseline. Distinguishing "population increased because more time has passed" from "population increased because a data collection issue was fixed" requires understanding the business process behind the data. The population profile surfaces the question; domain knowledge answers it. This is a recurring theme in data quality on read: the profiler finds the pattern, but only someone who understands the domain can say whether the pattern is correct.</p>
+<h2 id="wildcard-profiling"><a class="header" href="#wildcard-profiling">Wildcard Profiling</a></h2>
+<p>When the same field name appears at multiple levels of a nested structure, we can profile them collectively using a wildcard pattern. A query like <code>*.Name</code> gathers every <code>Name</code> field regardless of its position in the hierarchy, producing a single combined profile across all matching paths.</p>
+<p>In the JMA earthquake data, <code>Name</code> appears at multiple nesting levels: <code>Body.Earthquake.Hypocenter.Area.Name</code> (the earthquake epicentre region), <code>Body.Intensity.Observation.Pref.Name</code> (the prefecture), <code>Body.Intensity.Observation.Pref.Area.City.Name</code> (the city), and <code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name</code> (the individual monitoring station). Profiling <code>*.Name</code> collectively reveals whether the same character set and structural patterns are used consistently across all levels — or whether different nesting contexts use different conventions. If station names use Latin characters while prefecture names use kanji, the wildcard profile will show both populations in a single view.</p>
+<p>This extends across datasets. If postcodes appear in multiple nested structures — billing address, shipping address, registered office — profiling <code>*.PostCode</code> shows all postcodes regardless of context. When the aggregate profile reveals anomalies, you drill into individual paths to localise the issue. The wildcard gives you the overview; the specific path gives you the detail.</p>
+<p>Wildcard profiling is particularly powerful for cross-cutting consistency checks: verifying that all date fields across a dataset use the same format, that all name fields share the same casing conventions, or that all identifier fields have the same structural pattern. It turns field-by-field analysis into a dataset-wide consistency check, catching format drift that would be invisible when examining one field at a time.</p>
+<h2 id="the-two-pass-workflow"><a class="header" href="#the-two-pass-workflow">The Two-Pass Workflow</a></h2>
+<p>Combining population analysis with mask profiling gives us a general workflow for exploring any structured dataset:</p>
+<ol>
+<li>Run population checks to understand which fields are populated and which are sparse.</li>
+<li>Run low grain mask profiling to identify the structural families in each populated field.</li>
+<li>Review the long tail of rare masks to identify anomalies and potential quality issues.</li>
+<li>Drill into specific fields with high grain masking where precision matters (postcodes, phone numbers, dates, identifiers).</li>
+<li>Document the dominant masks as the "expected" formats for each field.</li>
+</ol>
+<p>This workflow takes minutes on a modestly sized dataset (up to a few hundred thousand rows) and scales to millions of rows with the CLI tool or billions with the Spark engine. The output — a per-field summary of structural patterns — is the foundation on which the rest of the DQOR process is built: masks as error codes, treatment functions, and the flat enhanced format that ties it all together.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="05-grain-scripts-and-character-classes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="07-masks-as-error-codes.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="05-grain-scripts-and-character-classes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="07-masks-as-error-codes.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

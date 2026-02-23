@@ -1,0 +1,243 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Glossary - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/glossary.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="glossary" class="unnumbered"><a class="header" href="#glossary">Glossary</a></h1>
+<p>This glossary defines the key technical terms used throughout this book. In translated editions, these terms are kept in English to maintain consistency with the tools and code examples. The definitions below serve as the reference for all translations.</p>
+<p><strong>allow list</strong> — A list of masks that are considered acceptable for a given column. Values whose masks do not appear in the allow list are flagged as anomalies. Compare with <em>exclusion list</em>.</p>
+<p><strong>assertion</strong> — A property or suggestion automatically inferred by the rules engine about a data value. For example, <code>is_uk_postcode: true</code> or <code>std_country_iso3: "GBR"</code>. Assertions are advisory — consumers choose whether to act on them.</p>
+<p><strong>bytefreq</strong> — An open-source command-line data profiling tool, written in Rust, that implements mask-based profiling and the flat enhanced output format. Originally written in awk in 2007. Short for <em>byte frequencies</em>.</p>
+<p><strong>character class</strong> — A category of character defined by the Unicode General Category standard: uppercase letter (Lu), lowercase letter (Ll), digit (Nd), punctuation, symbol, separator, and so on. Mask-based profiling translates each character to a symbol representing its class.</p>
+<p><strong>character profiling (CP)</strong> — A report mode that analyses the frequency of individual byte values or Unicode code points in a file. Used for encoding detection, invisible character discovery, and script composition analysis. Compare with <em>data quality profiling</em>.</p>
+<p><strong>coverage</strong> — The percentage of values in a column that match the top N masks. High coverage (&gt;95%) indicates a structurally uniform column; low coverage indicates structural diversity.</p>
+<p><strong>DataRadar</strong> — A browser-based data quality profiling tool that runs entirely client-side using WebAssembly. Implements the same profiling engine as bytefreq. Available at dataradar.co.uk.</p>
+<p><strong>data quality on read (DQOR)</strong> — An architecture principle where data quality profiling, validation, and remediation are deferred until the moment of consumption, rather than applied at ingest time. A parallel to <em>schema on read</em>.</p>
+<p><strong>cliff point</strong> — The point in a sorted mask frequency table where the percentage-of-previous-mask drops sharply, separating expected patterns from rare exceptions. Used for management by exception: masks above the cliff are normal operations; masks below it form a review queue for potential new assertion rules or treatment functions.</p>
+<p><strong>data quality profiling (DQ)</strong> — The default report mode in bytefreq and DataRadar. Generates mask frequency tables for each column, showing structural patterns and their occurrence counts.</p>
+<p><strong>exclusion list</strong> — A list of masks that are known to be problematic for a given column. Values whose masks match the exclusion list are flagged as errors. Compare with <em>allow list</em>.</p>
+<p><strong>flat enhanced format</strong> — A flattened key-value pair schema, sourced from nested data. Each field in the original data is expanded into a family of dot-notated keys: <code>.raw</code> (original value), <code>.HU</code> (high-grain mask), <code>.LU</code> (low-grain mask), and <code>.Rules</code> (assertions and suggestions). The floating schema handles ragged rows gracefully, annotations are easily added, and the namespace dot notation provides provenance and scoping.</p>
+<p><strong>grain</strong> — The resolution level of a mask. <em>High grain</em> maps every character individually, preserving exact lengths. <em>Low grain</em> collapses consecutive characters of the same class into a single symbol, reducing cardinality for structural discovery.</p>
+<p><strong>HU (High Unicode)</strong> — High-grain masking with Unicode character class support. Every character maps individually using its Unicode General Category. The most detailed masking level.</p>
+<p><strong>LU (Low Unicode)</strong> — Low-grain masking with Unicode support. Consecutive characters of the same class are collapsed. The default masking level in bytefreq, and the recommended starting point for exploratory profiling.</p>
+<p><strong>mask</strong> — A structural fingerprint of a data value, produced by translating each character to a symbol representing its character class. Uppercase letters become <code>A</code>, lowercase become <code>a</code>, digits become <code>9</code>, and punctuation is kept as-is. For example, <code>John Smith</code> produces the mask <code>Aaaa Aaaaa</code>.</p>
+<p><strong>mask cardinality</strong> — The number of distinct masks found in a column. Low cardinality (1–3 masks) indicates a well-structured column; high cardinality may indicate structural diversity or data quality issues.</p>
+<p><strong>population check</strong> — A test that determines whether each field in a record is populated or empty. When aggregated, it produces a per-field population percentage showing the proportion of non-null values.</p>
+<p><strong>population profile</strong> — A frequency table of masks for a column, sorted by count. Shows the dominant structural patterns and the long tail of rare masks.</p>
+<p><strong>Rayon</strong> — A Rust library for data parallelism that enables multi-threaded processing with minimal code changes. bytefreq uses Rayon to parallelise mask generation and assertion rule evaluation across columns, utilising all available CPU cores automatically.</p>
+<p><strong>provenance</strong> — The ability to trace a derived or treated value back to the original raw value it was computed from. The flat enhanced format preserves provenance by keeping the <code>.raw</code> column immutable alongside all derived columns.</p>
+<p><strong>.raw</strong> — The column in the flat enhanced format that contains the original, untouched value exactly as received from the source. Never modified, never overwritten.</p>
+<p><strong>reservoir sampling</strong> — A statistical technique used by bytefreq to select a truly random example value for each mask in a profiling report, without requiring a second pass over the data.</p>
+<p><strong>.Rules</strong> — The column in the flat enhanced format that contains automatically inferred assertions and suggested treatments for a value. Rules are advisory, not prescriptive — multiple competing suggestions can coexist.</p>
+<p><strong>schema on read</strong> — A data architecture principle where structural interpretation is deferred until the point of consumption, rather than enforced at ingest time. The foundation of modern data lake architectures, and the conceptual predecessor of <em>data quality on read</em>.</p>
+<p><strong>script detection</strong> — Automatic identification of the dominant Unicode scripts present in each column (e.g., Latin, Cyrillic, Arabic, CJK). Used to flag encoding issues and inform downstream processing.</p>
+<p><strong>treatment function</strong> — A remediation action mapped to a specific (column, mask) combination. For example, applying title-case normalisation to values with the mask <code>AAAA AAAAA</code>, or replacing placeholder values (mask <code>A/A</code>) with nulls. Treatment functions are non-destructive — the original value is always preserved.</p>
+<p><strong>WebAssembly (WASM)</strong> — A binary instruction format that allows code written in languages like Rust to run in web browsers at near-native speed. DataRadar uses WASM to run the bytefreq profiling engine client-side, ensuring that data never leaves the user's machine.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="conclusion.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="getting-started.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="conclusion.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="getting-started.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

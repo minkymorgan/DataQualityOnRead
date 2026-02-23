@@ -1,0 +1,387 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Quality Monitoring: Profiling Reports as Fact Tables - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/11-quality-monitoring.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="quality-monitoring-profiling-reports-as-fact-tables"><a class="header" href="#quality-monitoring-profiling-reports-as-fact-tables">Quality Monitoring: Profiling Reports as Fact Tables</a></h1>
+<p>The introduction described the vision: exit checks, entrance checks, line of sight, and accountability through measurement. This chapter describes the implementation.</p>
+<p>The key insight is that the profiling reports generated by bytefreq and DataRadar — both the DQ mask frequency tables and the CP character profiling reports — are already structured as fact tables. They have dimensions (column name, mask or character, data feed identifier, timestamp) and measures (count, percentage, coverage). Stored consistently over time, they become a timeseries database of data quality telemetry that can be queried, aggregated, and visualised like any other operational metric.</p>
+<h2 id="the-operating-model"><a class="header" href="#the-operating-model">The Operating Model</a></h2>
+<p>Before diving into the technical details, it is worth stepping back to see where quality monitoring fits in a data operating model.</p>
+<p><img src="DataOperatingModel_Capabilities_202512.png" alt="Data Operating Model Capabilities" /></p>
+<p>The diagram above shows a reference data operating model organised as a set of capabilities. Data Quality Discovery — the mask-based profiling described in this book — sits as a foundational capability that feeds into Data Quality Monitoring, which in turn feeds into Performance Reporting and Service Assurance. The profiling reports are the raw telemetry; the monitoring architecture is the plumbing that turns telemetry into KPIs; the service assurance layer is where those KPIs drive accountability.</p>
+<p>This is not a technology architecture. It is an organisational capability map. The tools described in this book — bytefreq, DataRadar, DuckDB — are implementations. The capabilities they serve are what matter to a CDO or CTO.</p>
+<h2 id="reports-as-fact-tables"><a class="header" href="#reports-as-fact-tables">Reports as Fact Tables</a></h2>
+<p>A standard DQ profile from bytefreq looks like this:</p>
+<pre><code>=== Column: postcode ===
+Mask                Count   Example
+A9 9A               8,412   SW1A 1AA
+A99 9A              1,203   M60 1NW
+A9A 9A                892   W1D 3QU
+9                     312   N/A
+</code></pre>
+<p>In machine-readable mode (JSON output), this becomes a structured record:</p>
+<pre><code class="language-json">{
+  "column": "postcode",
+  "masks": [
+    {"mask": "A9 9A", "count": 8412, "example": "SW1A 1AA"},
+    {"mask": "A99 9A", "count": 1203, "example": "M60 1NW"},
+    {"mask": "A9A 9A", "count": 892, "example": "W1D 3QU"},
+    {"mask": "9", "count": 312, "example": "N/A"}
+  ],
+  "total": 10819,
+  "mask_cardinality": 4
+}
+</code></pre>
+<p>Add a feed identifier and a timestamp, and you have a fact record:</p>
+<pre><code class="language-json">{
+  "feed": "council-planning-applications",
+  "profiled_at": "2025-12-19T08:00:00Z",
+  "column": "postcode",
+  "masks": [...],
+  "total": 10819,
+  "mask_cardinality": 4,
+  "coverage_top1": 0.777,
+  "population_rate": 0.985
+}
+</code></pre>
+<p>This is a dimensional fact table. The feed, timestamp, and column are the dimensions. The mask distribution, cardinality, coverage, and population rate are the measures. Store these records consistently and you have a timeseries.</p>
+<h2 id="the-directory-pattern"><a class="header" href="#the-directory-pattern">The Directory Pattern</a></h2>
+<p>The simplest implementation is a directory of files, partitioned by date and feed:</p>
+<pre><code>quality-reports/
+  2025-12-18/
+    council-planning-applications.dq.ndjson
+    council-planning-applications.cp.ndjson
+    nhs-patient-demographics.dq.ndjson
+    nhs-patient-demographics.cp.ndjson
+  2025-12-19/
+    council-planning-applications.dq.ndjson
+    council-planning-applications.cp.ndjson
+    nhs-patient-demographics.dq.ndjson
+    nhs-patient-demographics.cp.ndjson
+</code></pre>
+<p>Each file contains the profiling report for one feed on one date. The DQ file contains mask frequency tables per column. The CP file contains character frequency tables. Both are NDJSON — one JSON object per column.</p>
+<p>This is the same pool-and-glob pattern described in the DataRadar walkthrough chapter, applied to profiling reports rather than flat enhanced exports. The storage cost is negligible — profiling reports are small (kilobytes, not megabytes) because they contain aggregated frequencies, not individual records.</p>
+<h2 id="querying-the-timeseries"><a class="header" href="#querying-the-timeseries">Querying the Timeseries</a></h2>
+<p>DuckDB's file glob turns this directory into a queryable timeseries with no ingestion pipeline:</p>
+<pre><code class="language-sql">-- Coverage trend for a specific column across all dates
+SELECT
+    profiled_at::DATE AS report_date,
+    coverage_top1
+FROM read_ndjson_auto('quality-reports/*/*.dq.ndjson', filename=true)
+WHERE feed = 'council-planning-applications'
+  AND column = 'postcode'
+ORDER BY report_date;
+</code></pre>
+<pre><code class="language-sql">-- Feeds where mask cardinality increased (new patterns appearing)
+SELECT
+    feed,
+    column,
+    profiled_at::DATE AS report_date,
+    mask_cardinality
+FROM read_ndjson_auto('quality-reports/*/*.dq.ndjson')
+WHERE mask_cardinality &gt; 10
+ORDER BY feed, column, report_date;
+</code></pre>
+<pre><code class="language-sql">-- Population rate drop detection (mandatory field becoming sparse)
+WITH trends AS (
+    SELECT
+        feed,
+        column,
+        profiled_at::DATE AS report_date,
+        population_rate,
+        LAG(population_rate) OVER (
+            PARTITION BY feed, column ORDER BY profiled_at
+        ) AS prev_rate
+    FROM read_ndjson_auto('quality-reports/*/*.dq.ndjson')
+)
+SELECT * FROM trends
+WHERE prev_rate - population_rate &gt; 0.05
+ORDER BY report_date DESC;
+</code></pre>
+<p>These are the queries that power a quality dashboard. No database to maintain, no ingestion pipeline to build — just a directory of small JSON files and a query engine that reads them on demand.</p>
+<h2 id="exit-checks-and-entrance-checks"><a class="header" href="#exit-checks-and-entrance-checks">Exit Checks and Entrance Checks</a></h2>
+<p>The monitoring architecture has two deployment points.</p>
+<h3 id="exit-checks-producer-side"><a class="header" href="#exit-checks-producer-side">Exit Checks (Producer Side)</a></h3>
+<p>An exit check runs after a data pipeline produces its output, before the output is published to consumers. In a CI/CD pipeline, this is a post-build step:</p>
+<pre><code class="language-bash">#!/bin/bash
+# exit-check.sh — run after data pipeline completes
+FEED="council-planning-applications"
+DATE=$(date +%Y-%m-%d)
+OUTPUT_DIR="quality-reports/${DATE}"
+mkdir -p "${OUTPUT_DIR}"
+
+# Profile the output
+cat pipeline-output.csv \
+  | bytefreq -d ',' -f tabular \
+  &gt; "${OUTPUT_DIR}/${FEED}.dq.ndjson"
+
+# Character profile
+cat pipeline-output.csv \
+  | bytefreq -d ',' -r CP \
+  &gt; "${OUTPUT_DIR}/${FEED}.cp.ndjson"
+
+# Check for regressions against previous day
+# (custom script that compares today's report with yesterday's)
+python3 check-regressions.py \
+  --today "${OUTPUT_DIR}/${FEED}.dq.ndjson" \
+  --baseline "quality-reports/$(date -d yesterday +%Y-%m-%d)/${FEED}.dq.ndjson"
+</code></pre>
+<p>The exit check produces the quality report and optionally runs regression detection — comparing today's profile against yesterday's to flag significant changes. If the regression check fails (coverage dropped below threshold, new unexpected masks appeared, population rate fell), the pipeline can halt publication and alert the team.</p>
+<h3 id="entrance-checks-consumer-side"><a class="header" href="#entrance-checks-consumer-side">Entrance Checks (Consumer Side)</a></h3>
+<p>An entrance check runs when a data feed is received, before it enters the consumer's pipeline:</p>
+<pre><code class="language-bash">#!/bin/bash
+# entrance-check.sh — run when feed arrives
+FEED="council-planning-applications"
+DATE=$(date +%Y-%m-%d)
+OUTPUT_DIR="quality-reports/${DATE}"
+mkdir -p "${OUTPUT_DIR}"
+
+# Profile the received data
+cat received-feed.csv \
+  | bytefreq -d ',' -E \
+  &gt; "${OUTPUT_DIR}/${FEED}.enhanced.ndjson"
+
+cat received-feed.csv \
+  | bytefreq -d ',' \
+  &gt; "${OUTPUT_DIR}/${FEED}.dq.ndjson"
+
+# Compare against the producer's exit check report
+# (if available via shared quality report exchange)
+python3 compare-exit-entrance.py \
+  --exit "producer-reports/${DATE}/${FEED}.dq.ndjson" \
+  --entrance "${OUTPUT_DIR}/${FEED}.dq.ndjson"
+</code></pre>
+<p>When both exit and entrance checks are in place, discrepancies between them reveal problems in transit — encoding changes, truncation, field reordering, or lossy transformations that happened between the producer's output and the consumer's input.</p>
+<h2 id="kpis-and-the-quality-dashboard"><a class="header" href="#kpis-and-the-quality-dashboard">KPIs and the Quality Dashboard</a></h2>
+<p>From the timeseries of profiling reports, several KPIs emerge naturally:</p>
+<p><strong>Coverage stability</strong> — Is the top-1 mask coverage for each column holding steady over time? A sudden drop means a new pattern has appeared in significant volume.</p>
+<p><strong>Mask cardinality trend</strong> — Is the number of distinct masks per column increasing? A gradual increase may indicate format drift. A sudden spike may indicate a data source change or a pipeline bug.</p>
+<p><strong>Population rate</strong> — What percentage of each field is populated? Track this daily. A mandatory field that drops from 99.5% to 80% is an early warning of an upstream collection problem.</p>
+<p><strong>New mask detection</strong> — Did any mask appear today that has never appeared before in this feed? New masks are the single most valuable alert in quality monitoring — they indicate structural change, which may be benign (a new valid format) or problematic (data corruption, source system change, encoding error).</p>
+<p><strong>Assertion pass rate</strong> — For columns where the rules engine runs (as described in the Assertion Rules Engine chapter), what percentage of values pass their assertions? An IBAN column where <code>is_valid_iban</code> drops from 98% to 85% deserves immediate investigation.</p>
+<p>These KPIs are not exotic. They are the data quality equivalent of uptime, latency, and error rate in service monitoring. The difference is that most organisations do not measure them consistently — not because the measurement is hard, but because nobody set up the infrastructure to collect and store the reports. The directory-of-profiles pattern described here makes that infrastructure trivially simple.</p>
+<h2 id="line-of-sight-from-impact-to-source"><a class="header" href="#line-of-sight-from-impact-to-source">Line of Sight: From Impact to Source</a></h2>
+<p>The monitoring architecture becomes genuinely powerful when connected to data lineage.</p>
+<p>Consider a scenario: a downstream analytics team discovers that 5% of their geospatial analyses are failing because postcodes cannot be geocoded. The entrance check report for the feed shows that 5% of postcode values have the mask <code>aaaa</code> — alphabetic strings like <code>null</code>, <code>none</code>, <code>test</code>. The timeseries shows this started three weeks ago. The feed comes from Council X. Council X's exit check report confirms the same pattern — their collection system started accepting free-text in the postcode field after a software update.</p>
+<p>With lineage metadata connecting the feed to its downstream consumers, the impact is quantifiable: 5% of records × N downstream analyses × cost per failed analysis = £Y. This is not a vague "your data is bad" complaint. It is a specific, evidenced, costed impact statement that can be presented to Council X's management.</p>
+<p>This is the accountability loop that the introduction described. The timeseries provides the evidence. The lineage provides the traceability. The profiling reports provide the specificity. Together, they enable the conversation: "Your department's data collection change on this date caused this downstream impact costing this amount. Here is the evidence. How shall we fix it?"</p>
+<h2 id="fit-for-the-journey"><a class="header" href="#fit-for-the-journey">Fit for the Journey</a></h2>
+<p>The traditional framing of data quality is <strong>fit for purpose</strong> — can the immediate consumer use the data for their intended task? This is necessary but insufficient.</p>
+<p>Data in a modern government or enterprise rarely has one consumer. A dataset collected at a local council may flow through a regional aggregator, a central government data platform, a statistical publication pipeline, a machine learning feature store, and a public API before reaching its final consumers. At each stage, the data is read, interpreted, transformed, and forwarded. At each stage, structural assumptions are made. At each stage, quality issues can be introduced, amplified, or — if the right checks are in place — detected and addressed.</p>
+<p><strong>Fit for the journey</strong> means the data carries enough structural metadata to be understood and validated at every stage. The flat enhanced format (described in the Flat Enhanced Format chapter) provides this at the record level — each value carries its masks and assertions alongside the raw data. The profiling reports described in this chapter provide it at the feed level — each delivery carries a machine-readable quality certificate that downstream consumers can compare against their expectations.</p>
+<p>When a data feed arrives with its profiling report, the consumer does not need to re-profile from scratch (though they may choose to, as an entrance check). They can read the report, compare it against the baseline, and make an informed decision: accept, reject, or accept with caveats. The report is a passport — a document that accompanies the data on its journey and records its structural state at each checkpoint.</p>
+<h2 id="discovery-before-exploration"><a class="header" href="#discovery-before-exploration">Discovery Before Exploration</a></h2>
+<p>One final point about where this monitoring architecture sits in the broader data quality landscape.</p>
+<p>Mask-based profiling is not a replacement for tools like Great Expectations, dbt tests, Pandas profiling, or Soda. Those tools are excellent at <em>validating known expectations</em>: is this column non-null? Does this value fall within a range? Does this distribution match the historical baseline? They are exploratory and validation tools that assume you already understand the structure of your data well enough to write meaningful tests.</p>
+<p>Data Quality Discovery — the mask-based profiling step — comes <em>before</em> exploration. It answers the question that the exploratory tools cannot: <strong>what does this data actually look like?</strong> You cannot write a Great Expectations test for a column whose structure you have not yet discovered. You cannot explore what you cannot read.</p>
+<p>The monitoring architecture described in this chapter adds the time dimension to that discovery. A single profile tells you what the data looks like today. A timeseries of profiles tells you how it is changing. The exit and entrance checks tell you where problems are being introduced. The KPIs tell you whether quality is improving or degrading. And the lineage integration tells you who is affected and what it costs.</p>
+<p>These are the building blocks for assuring a data service — not just a file, but the entire flow of data through an organisation. The tools in the following chapters show how to implement each building block. The architecture is how they fit together.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="10-the-tools.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="11-using-dataradar.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="10-the-tools.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="11-using-dataradar.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

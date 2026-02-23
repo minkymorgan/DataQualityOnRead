@@ -1,0 +1,489 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Worked Example: Profiling PubMed XML — International Biomedical Literature - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/worked-example-pubmed-xml.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="worked-example-profiling-pubmed-xml--international-biomedical-literature" class="unnumbered"><a class="header" href="#worked-example-profiling-pubmed-xml--international-biomedical-literature">Worked Example: Profiling PubMed XML — International Biomedical Literature</a></h1>
+<p>This appendix is the third worked example in this book, and it introduces something new: XML. The previous examples profiled pipe-delimited CSV (Companies House) and nested JSON (JMA earthquakes). This one profiles PubMed article metadata — a 3.4 MB XML document containing 200 biomedical research articles with 1,696 international authors from six continents. The point is not just to show that bytefreq handles XML. It is to show that the same mask-based profiling technique applies regardless of serialisation format, and that XML — with its attributes, mixed content, and namespace-qualified elements — presents its own data quality challenges that profiling surfaces automatically.</p>
+<p>PubMed is the US National Library of Medicine's database of biomedical literature. It contains over 36 million citations. The data is available as bulk XML downloads and through APIs, and it is used by researchers, pharmaceutical companies, systematic review teams, and health informatics systems worldwide. If you work with biomedical data, you will encounter PubMed XML. And if you ingest it without profiling it first, you will discover its quirks the hard way.</p>
+<h2 id="the-dataset"><a class="header" href="#the-dataset">The Dataset</a></h2>
+<p>The dataset is a PubMed XML export containing 200 recent articles, selected specifically for international author diversity. It contains authors with Chinese, Korean, Vietnamese, Indian, Arabic, Turkish, Finnish, Estonian, Slovenian, Polish, Spanish, Portuguese, French, Dutch, and Irish names — the full spectrum of Latin-script diacritics, multi-part surnames, and naming conventions that real-world biomedical data contains.</p>
+<p>The XML follows the NLM PubMed DTD, a well-documented and mature schema that has been in use for decades. Each <code>&lt;PubmedArticle&gt;</code> element contains two main blocks: <code>&lt;MedlineCitation&gt;</code> (the bibliographic metadata — title, authors, journal, abstract, MeSH headings) and <code>&lt;PubmedData&gt;</code> (publication history, article identifiers, references). The author information is nested several levels deep: <code>PubmedArticleSet.PubmedArticle.MedlineCitation.Article.AuthorList.Author</code>, with child elements for <code>LastName</code>, <code>ForeName</code>, <code>Initials</code>, <code>Identifier</code> (ORCID), and <code>AffiliationInfo.Affiliation</code>.</p>
+<h2 id="xml-as-a-first-class-format"><a class="header" href="#xml-as-a-first-class-format">XML as a First-Class Format</a></h2>
+<p>This is the first XML example in the book, so it is worth pausing to explain how bytefreq handles XML natively.</p>
+<p>Bytefreq uses SAX (Simple API for XML) streaming to parse XML documents. It does not load the entire document into memory — it reads the XML as a stream of events (element open, element close, text content, attribute), building dot-notation paths as it descends and ascending as elements close. This means it can profile multi-gigabyte XML files with constant memory usage, just as it streams JSON and tabular data.</p>
+<p>The path convention for XML is straightforward:</p>
+<ul>
+<li><strong>Elements</strong> become dot-separated path segments: <code>PubmedArticleSet.PubmedArticle.MedlineCitation.PMID</code></li>
+<li><strong>Attributes</strong> are prefixed with <code>@</code>: <code>MedlineCitation.@Status</code>, <code>ISSN.@IssnType</code></li>
+<li><strong>Repeated elements</strong> (arrays in JSON terms) are handled by the same array-collapsing logic used for JSON — all <code>&lt;Author&gt;</code> elements at the same level contribute values to the same field path</li>
+</ul>
+<p>The result is identical in structure to what you get from flattened JSON: a set of dot-notation field paths, each with a population count and a distribution of mask patterns. The profiling commands are:</p>
+<pre><code class="language-bash">cat pubmed-international.xml | bytefreq --format xml --grain HU
+cat pubmed-international.xml | bytefreq --format xml --grain LU
+</code></pre>
+<p>The <code>--format xml</code> flag activates the SAX parser. Everything else — grain selection, mask generation, report output — works exactly as it does for JSON and tabular data. One profiling technique, any serialisation format.</p>
+<h2 id="structure-discovery-what-does-pubmed-xml-contain"><a class="header" href="#structure-discovery-what-does-pubmed-xml-contain">Structure Discovery: What Does PubMed XML Contain?</a></h2>
+<p>The profiler discovers 126 unique field paths across the 200 articles. This is the structural inventory — the complete set of elements and attributes that appear anywhere in the dataset. Here are the key paths with their value counts (total values across all 200 articles):</p>
+<pre><code>Field Path                                                      Values
+-----------------------------------------------------------------------
+MedlineCitation.@Status                                            200
+MedlineCitation.@Owner                                             200
+MedlineCitation.PMID                                               200
+MedlineCitation.PMID.@Version                                      200
+MedlineCitation.Article.@PubModel                                  200
+MedlineCitation.Article.Journal.ISSN                               200
+MedlineCitation.Article.Journal.ISSN.@IssnType                     200
+MedlineCitation.Article.Journal.JournalIssue.PubDate.Year          200
+MedlineCitation.Article.Journal.JournalIssue.PubDate.Month         200
+MedlineCitation.Article.Journal.JournalIssue.PubDate.Day           200
+MedlineCitation.Article.Journal.Title                               200
+MedlineCitation.Article.ArticleTitle                                200
+MedlineCitation.Article.AuthorList.@CompleteYN                      200
+MedlineCitation.Article.AuthorList.Author.@ValidYN               1,699
+MedlineCitation.Article.AuthorList.Author.LastName               1,696
+MedlineCitation.Article.AuthorList.Author.ForeName               1,695
+MedlineCitation.Article.AuthorList.Author.Initials               1,695
+MedlineCitation.Article.AuthorList.Author.Identifier               353
+MedlineCitation.Article.AuthorList.Author.Identifier.@Source       353
+MedlineCitation.Article.AuthorList.Author.AffiliationInfo.Affil  2,059
+MedlineCitation.Article.AuthorList.Author.@EqualContrib             72
+MedlineCitation.Article.AuthorList.Author.CollectiveName             3
+MedlineCitation.Article.AuthorList.Author.Suffix                     1
+MedlineCitation.Article.Abstract.AbstractText                      604
+MedlineCitation.Article.Abstract.AbstractText.@Label               253
+MedlineCitation.Article.Abstract.AbstractText.@NlmCategory         247
+MedlineCitation.Article.ELocationID                                316
+MedlineCitation.Article.GrantList.Grant.GrantID                    258
+MedlineCitation.Article.GrantList.Grant.Agency                     258
+MedlineCitation.KeywordList.Keyword                                793
+MedlineCitation.MeshHeadingList.MeshHeading.DescriptorName         341
+PubmedData.ArticleIdList.ArticleId                                 616
+PubmedData.ReferenceList.Reference.Citation                      6,356
+</code></pre>
+<p>Several things jump out immediately.</p>
+<p><strong>Author counts reveal the fan-out.</strong> There are 200 articles but 1,696 author last names, 1,695 forenames, and 1,695 sets of initials. The one-name discrepancy (1,696 vs 1,695) is explained by the <code>@ValidYN</code> attribute count of 1,699 — three <code>Author</code> elements have a <code>CollectiveName</code> instead of <code>LastName</code>/<code>ForeName</code> (consortium or group authorships like "IMAGEN Consortium" or "SIREN study group"), and there is one author with a last name but no forename. The profiler surfaces these structural variants automatically: you do not need to know the PubMed DTD to discover that author representation is not uniform.</p>
+<p><strong>Affiliations are sparse.</strong> 2,059 affiliation values for 1,696 authors means some authors have multiple affiliations — but it also means some authors have none. In a hierarchical XML structure, the absence of an <code>&lt;AffiliationInfo&gt;</code> child element is invisible unless you count. If every author had exactly one affiliation, we would expect 1,696 values. The 2,059 count tells us that multi-affiliation authors are common (joint appointments, visiting positions), but it does not tell us how many authors have zero affiliations. That requires comparing the author count to the number of distinct authors with at least one affiliation — a second-order analysis that the population counts prompt us to investigate.</p>
+<p><strong>ORCID coverage is low.</strong> Only 353 of 1,696 authors (20.8%) have an <code>Identifier</code> element. Every one of those identifiers has <code>@Source</code> = "ORCID". Four out of five authors in this dataset have no persistent identifier — a significant data quality gap for anyone trying to disambiguate authors or link publications to researchers.</p>
+<p><strong>Abstracts are structured.</strong> The 604 <code>AbstractText</code> values for 200 articles mean most articles have structured abstracts with labelled sections (Background, Methods, Results, Conclusions). The 253 <code>@Label</code> attributes confirm this — roughly half the abstract sections carry explicit labels. The 247 <code>@NlmCategory</code> values are the NLM's normalised category assignments, slightly fewer than the labels because some labels do not map to standard categories.</p>
+<p><strong>One Suffix in the entire dataset.</strong> Exactly one author has a <code>Suffix</code> element, containing "Jr". This is not a data quality issue — suffixes are genuinely rare in international biomedical authorship — but the profiler surfaces it because a field that appears once in 1,696 records is structurally noteworthy.</p>
+<h2 id="field-by-field-analysis"><a class="header" href="#field-by-field-analysis">Field-by-Field Analysis</a></h2>
+<h3 id="citation-status"><a class="header" href="#citation-status">Citation Status</a></h3>
+<p><code>MedlineCitation.@Status</code></p>
+<pre><code>Mask                        Count   Example
+Aaaaaaaaa                     114   Publisher
+AaaAaa-aaa-AAAAAAA             49   PubMed-not-MEDLINE
+AAAAAAA                        35   MEDLINE
+Aa-Aaaaaaa                      2   In-Process
+</code></pre>
+<p>Four structural variants in an attribute that acts as a processing status flag. The dominant value "Publisher" (57%) indicates records supplied by publishers but not yet indexed by NLM. "PubMed-not-MEDLINE" (24.5%) means the article is in PubMed but not indexed with MeSH headings. "MEDLINE" (17.5%) indicates full NLM processing. "In-Process" (1%) means NLM indexing is underway.</p>
+<p>The masks reveal the naming convention immediately: these are not simple codes but human-readable compound strings with mixed case, hyphens, and an abbreviation block (<code>MEDLINE</code>, <code>AAAAAAA</code>). Any downstream system that branches on this attribute needs to handle all four variants — and the mask distribution tells you exactly how common each one is.</p>
+<h3 id="issn"><a class="header" href="#issn">ISSN</a></h3>
+<p><code>Article.Journal.ISSN</code></p>
+<pre><code>Mask        Count   Example
+9999-9999     180   1756-5391
+9999-999A      20   1476-928X
+</code></pre>
+<p>The classic ISSN format: four digits, a hyphen, then either four digits or three digits and a check character. The <code>X</code> check digit (representing the value 10) appears in 10% of ISSNs. This is well-known to anyone who works with serials data, but for a newcomer encountering ISSN for the first time, the mask immediately reveals the structural variant without requiring any domain knowledge.</p>
+<h3 id="publication-model"><a class="header" href="#publication-model">Publication Model</a></h3>
+<p><code>Article.@PubModel</code></p>
+<pre><code>Mask                           Count   Example
+Aaaaa-Aaaaaaaaaa                 126   Print-Electronic
+Aaaaaaaaaa-aAaaaaaaaaa            32   Electronic-eCollection
+Aaaaaaaaaa                        23   Electronic
+Aaaaa                             19   Print
+</code></pre>
+<p>Four publication models, and the masks capture the compound naming convention: "Print-Electronic" (63%) means the article appeared in both print and electronic form. Note <code>Electronic-eCollection</code> with its internal lowercase-uppercase transition (<code>eCollection</code>), which the mask correctly renders as <code>aAaaaaaaaaa</code>. The <code>eCollection</code> capitalisation convention — lowercase <code>e</code> prefix on a capitalised word — is a common pattern in publishing metadata.</p>
+<h3 id="author-last-names--the-international-name-challenge"><a class="header" href="#author-last-names--the-international-name-challenge">Author Last Names — The International Name Challenge</a></h3>
+<p><code>AuthorList.Author.LastName</code> — High-Unicode (HU) grain</p>
+<pre><code>Mask                    Count   Example
+Aaaaa                     267   Lewis
+Aaaaaa                    237   Nadein
+Aaaa                      196   Tian
+Aaaaaaa                   193   Daniels
+Aaaaaaaa                  171   Fambirai
+Aaa                       145   Lin
+Aaaaaaaaa                  95   Attygalle
+Aa                         82   Wu
+Aaaaaaaaaa                 49   Wawrzaszek
+Aaaaaaaaaaa                37   Sprikkelman
+Aaaaaaaaaaaa               11   Banaschewski
+AaAaaaa                     7   McQuaid
+Aaaaaaaaaaaaa               6   Charuthamrong
+Aaaaaaa-Aaaaaaa             4   Pallqui-Camacho
+Aaaaaa-Aaaaa                4   Storck-Tonon
+Aaaaaa-Aaaaaaa              4   Coello-Peralta
+A                           3   M
+aa Aaaaaaaa                 3   de Oliveira
+Aa Aaaaaaa                  3   Di Lucente
+Aa-Aaaaaaa                  3   Al-Shalabi
+AaAaaaaa                    3   McCallum
+</code></pre>
+<p>The top ten masks are simple single-word surnames of varying lengths — five to twelve characters — covering 1,383 of 1,696 authors (81.5%). These are structurally unambiguous: one capitalised word composed entirely of ASCII Latin letters. Names like "Tian" (Chinese), "Lin" (Chinese/Vietnamese), "Wu" (Chinese), and "Fambirai" (Zimbabwean) all share the same simple mask as "Lewis" (English) and "Daniels" (English). The mask does not distinguish language of origin — nor should it at this level. These names are structurally identical.</p>
+<p>The remaining 18.5% is where it gets interesting:</p>
+<p><strong>Celtic prefixes:</strong> <code>AaAaaaa</code> (7 values) captures the <code>Mc</code>/<code>Mac</code> pattern — <code>McQuaid</code>, <code>McCallum</code>, <code>McNair</code>. The internal capitalisation creates a distinctive mask that separates these from simple surnames.</p>
+<p><strong>Hispanic double-barrelled names:</strong> Hyphenated masks like <code>Aaaaaaa-Aaaaaaa</code> (4 values, e.g. <code>Pallqui-Camacho</code>), <code>Aaaaaa-Aaaaaaa</code> (4 values, e.g. <code>Coello-Peralta</code>) represent the Latin American convention of paternal-maternal surname compounds. There are 61 hyphenated surnames in the LU view — roughly one in every 28 authors.</p>
+<p><strong>Dutch/Portuguese particles:</strong> <code>aa Aaaaaaaa</code> (3 values, <code>de Oliveira</code>), <code>aaa Aaaaaaa</code> (6 values in LU, <code>van der Deure</code>, <code>van Breugel</code>). Lowercase particles before the capitalised family name create multi-word masks with a distinctive lowercase-uppercase boundary. The profiler treats the space-separated components as distinct segments, making particle names instantly distinguishable from single-word names.</p>
+<p><strong>Arabic prefixes:</strong> <code>Aa-Aaaaaaa</code> (3 values, <code>Al-Shalabi</code>) and <code>Aa Aaaaa</code> (1 value, <code>Al Sharie</code>). The same Arabic prefix "Al" appears both hyphenated and space-separated — a genuine data quality finding. Are these variant representations of the same naming convention, or do they reflect different transliteration standards? The profiler does not answer that question, but it ensures the question gets asked.</p>
+<p><strong>Single-letter surnames:</strong> <code>A</code> (3 values, <code>M</code>, <code>K</code>). Three authors have a single-letter last name. These are almost certainly data quality issues — truncated names, initials entered in the wrong field, or authors from naming traditions where a single name is conventional but PubMed's schema forces it into the LastName field. The mask <code>A</code> (one uppercase letter) flags them unmistakably.</p>
+<p><strong>The leading-hyphen anomaly:</strong> In the LU view, one surname has the mask <code>-Aa</code> with the value <code>-Akotet</code>. A surname that begins with a hyphen is a data entry error — likely a compound name where the first component was accidentally deleted, leaving the hyphen orphaned. This is exactly the kind of micro-anomaly that mask profiling is designed to catch: one record in 1,696, structurally unique, and almost certainly wrong.</p>
+<h3 id="xml-entity-references-in-names--a-format-specific-finding"><a class="header" href="#xml-entity-references-in-names--a-format-specific-finding">XML Entity References in Names — A Format-Specific Finding</a></h3>
+<p>The most striking finding in the author name analysis is visible only because we are profiling XML rather than JSON or CSV. Look at these mask patterns from the HU grain:</p>
+<pre><code>Mask                        Count   Example
+A__aa9_aa                       3   V&amp;#xe4;hi
+Aaaaa__aa9_a                    3   Bostr&amp;#xf6;m
+A__aa9_aaaaa                    2   M&amp;#xe4;rtson
+Aaaaaaa__aa9_aaa                2   Desrivi&amp;#xe8;res
+Aa__aa9_a                       1   Pe&amp;#xf1;a
+A__aa9_a__aa9_aaa               1   K&amp;#xe4;h&amp;#xf6;nen
+__aa9_aaaa Aaaaaaa              1   &amp;#xc7;elik Demirci
+</code></pre>
+<p>The <code>__aa9_</code> segments are XML numeric character references — <code>&amp;#xe4;</code> is ä, <code>&amp;#xf6;</code> is ö, <code>&amp;#xf1;</code> is ñ, <code>&amp;#xe8;</code> is è, <code>&amp;#xc7;</code> is Ç. These are diacritical characters encoded as XML entities rather than as raw UTF-8 bytes. The bytefreq profiler is seeing the raw XML text, and since <code>&amp;</code>, <code>#</code>, <code>x</code>, and <code>;</code> are punctuation/alphanumeric characters in ASCII, each entity reference produces a distinctive mask segment.</p>
+<p>This is a critical data quality finding for XML processing. The same name — say, "Kähönen" (Finnish) — will have a different mask depending on whether the diacritics are stored as raw UTF-8 characters (producing <code>Aaaaaaaa</code>) or as XML entity references (producing <code>A__aa9_a__aa9_aaa</code>). The mask profiler reveals which encoding convention the data uses, and whether it is consistent.</p>
+<p>In this dataset, names with diacritics consistently use XML numeric character references rather than raw UTF-8. This is a legitimate encoding choice — the PubMed DTD has historically preferred entity references for characters outside the ASCII range — but it has consequences for downstream processing. Any system that consumes this XML must resolve entity references before performing string operations like sorting, searching, or display. The mask profiler warns you about this before you write a single line of parsing code.</p>
+<p>The LU (Low-grain Unicode) view collapses the entity references into more readable patterns:</p>
+<pre><code>Mask            Count   Example
+Aa               1494   Gurgone
+Aa-Aa              61   Dantur-Juri
+Aa Aa              29   Diaz Montes
+Aa_a9_a            19   Pe&amp;#xf1;uela
+AaAa               15   McBride
+A_a9_a             11   M&amp;#xe4;rtson
+a Aa                8   von Mutius
+a a Aa              6   van der Deure
+Aa_a_a-Aa           4   Ram&amp;#xed;rez-Angulo
+A                   3   K
+A_Aa                3   O'Grady
+-Aa                 1   -Akotet
+</code></pre>
+<p>At LU grain, the entity references collapse to shorter patterns (<code>_a9_a</code> instead of <code>__aa9_a</code>) but remain visually distinct from pure alphabetic content. The 19 names matching <code>Aa_a9_a</code> all contain a single entity-encoded diacritic — Spanish ñ, French è, Swedish ö, Hungarian á. The 11 matching <code>A_a9_a</code> have the entity at the start of the name.</p>
+<h3 id="author-first-names"><a class="header" href="#author-first-names">Author First Names</a></h3>
+<p><code>AuthorList.Author.ForeName</code> — LU grain</p>
+<pre><code>Mask            Count   Example
+Aa               1076   Stephen
+Aa A              180   Cornelis P
+A                 146   L
+Aa Aa              79   Ji Woong
+A A                66   J A
+Aa-Aa              53   Kim-Anh
+Aa Aa Aa           17   Marcello Mihailenko Chaves
+Aa A A             13   Michael J W
+A Aa                9   J Guy
+A A A               7   R S A
+Aa_a9_a             7   Dearbh&amp;#xe1;ile
+</code></pre>
+<p>The forename field reveals the full range of naming conventions:</p>
+<p><strong>Full first names</strong> (<code>Aa</code>, 1,076 values, 63.5%): The dominant pattern — a single capitalised word. This covers given names from every language represented in the dataset: "Stephen" (English), "Yong" (Chinese), "Priya" (Indian), "Ahmed" (Arabic), "Olga" (Russian).</p>
+<p><strong>First name plus middle initial</strong> (<code>Aa A</code>, 180 values, 10.6%): A common Western convention — "Cornelis P", "David A". The single uppercase letter after a space is clearly an initial.</p>
+<p><strong>Initials only</strong> (<code>A</code>, 146 values, 8.6%): A single letter. These are authors whose first name has been reduced to an initial. This is a data quality concern: it makes author disambiguation effectively impossible. One hundred and forty-six authors — nearly one in twelve — are represented by a single letter rather than a full given name.</p>
+<p><strong>Double initials</strong> (<code>A A</code>, 66 values, 3.9%): Two separate initials — "J A", "P M". These authors have neither first nor middle name recorded, only initials for both.</p>
+<p><strong>Korean/Vietnamese two-part given names</strong> (<code>Aa Aa</code>, 79 values, 4.7%): "Ji Woong", "Kim Anh" — given names from cultures where the given name is conventionally two words. The space-separated pattern is structurally identical to a Western "first name + middle name" pair, which creates ambiguity: is "Ji Woong" a two-part given name, or is "Ji" the first name and "Woong" a middle name? The mask cannot tell you — but it shows you the scale of the ambiguity.</p>
+<p><strong>Hyphenated given names</strong> (<code>Aa-Aa</code>, 53 values, 3.1%): "Kim-Anh" (Vietnamese), "Ann-Marie" (English/French). The hyphen preserves the two-part structure as a single token. Some Vietnamese names appear both hyphenated (Kim-Anh → <code>Aa-Aa</code>) and space-separated (Ji Woong → <code>Aa Aa</code>), revealing inconsistent handling of the same naming convention.</p>
+<p><strong>Triple initials</strong> (<code>A A A</code>, 7 values): "R S A" — three separate initials. These authors are even more opaque than the double-initial cases.</p>
+<p><strong>Irish/Gaelic names</strong> (<code>Aa_a9_a</code>, 7 values): "Dearbháile" — Irish given names with entity-encoded fadas (acute accents). The entity reference creates a distinctive mask segment, just as it did in the surname field.</p>
+<h3 id="orcid-identifiers"><a class="header" href="#orcid-identifiers">ORCID Identifiers</a></h3>
+<p><code>AuthorList.Author.Identifier</code> (where <code>@Source</code> = "ORCID")</p>
+<pre><code>Mask        Count   Example
+9-9-9-9       319   0000-0002-9384-6341
+9-9-9-9A       34   0000-0001-9815-200X
+</code></pre>
+<p>ORCID identifiers follow the ISNI format: four groups of four digits separated by hyphens, with the last character optionally being <code>X</code> (a check digit representing 10, identical to the ISSN convention). The mask distribution is clean: 90.4% pure numeric, 9.6% with an X check digit. No structural anomalies, no formatting inconsistencies. This is what well-governed identifier data looks like under profiling.</p>
+<h3 id="affiliation-identifiers--mixed-standards"><a class="header" href="#affiliation-identifiers--mixed-standards">Affiliation Identifiers — Mixed Standards</a></h3>
+<p><code>AuthorList.Author.AffiliationInfo.Identifier</code></p>
+<pre><code>Mask                Count   Example
+a_a.a_9a9a9            89   https://ror.org/03tqb8s11
+a_a.a_9a9              63   https://ror.org/041akq887
+9                      23   2281
+9 9 9 9                22   0000 0000 9009 5680
+a.9.9                  18   grid.411237.2
+a.9.a                   5   grid.4800.c
+</code></pre>
+<p>This is one of the richest data quality findings in the entire profile. Affiliation identifiers use at least three different identifier schemes, mixed together in a single field:</p>
+<ul>
+<li><strong>ROR URLs</strong> (152 values, 69%): Research Organization Registry identifiers as full URLs — <code>https://ror.org/03tqb8s11</code>. Two mask variants because the alphanumeric suffix varies in structure.</li>
+<li><strong>ISNI numbers</strong> (22 values, 10%): International Standard Name Identifiers in space-separated four-digit groups — <code>0000 0000 9009 5680</code>.</li>
+<li><strong>GRID identifiers</strong> (23 values, 10.5%): Global Research Identifier Database IDs — <code>grid.411237.2</code>, <code>grid.4800.c</code>.</li>
+<li><strong>Bare numeric IDs</strong> (23 values, 10.5%): Plain numbers like <code>2281</code> with no prefix or structure — possibly Ringgold identifiers.</li>
+</ul>
+<p>Four different identifier schemes in a single XML element. The <code>@Source</code> attribute for these identifiers is consistently "ROR" (222 values), which is incorrect — only 152 of 222 identifiers are actually ROR URLs. The GRID, ISNI, and numeric identifiers are mislabelled. This is a data quality error that the mask profiler catches by revealing structural diversity that a single <code>@Source</code> value claims does not exist.</p>
+<h3 id="affiliation-text"><a class="header" href="#affiliation-text">Affiliation Text</a></h3>
+<p><code>AuthorList.Author.AffiliationInfo.Affiliation</code> — The affiliation field produces the most structurally diverse output in the entire dataset: over 1,200 distinct masks for 2,059 values. This is expected — affiliation strings are semi-structured free text combining institution names, department names, cities, countries, and postal codes in no consistent order. A few representative patterns from the LU grain:</p>
+<pre><code>Mask                                                    Count   Example
+Aa Aa Aa Aa, Aa, Aa.                                      26   Central Public Health Laboratories, Kampala, Uganda.
+Aa a Aa, Aa a Aa, Aa, A.                                  14   School of Geography, University of Leeds, Leeds, UK.
+Aa Aa, Aa, Aa.                                             11   Makerere University, Kampala, Uganda.
+Aa a Aa Aa, Aa Aa a Aa, Aa, Aa, Aa.                        8   Centre for Pathogen Genomics, The University of Melbourne, ...
+</code></pre>
+<p>The structural diversity is the finding. Affiliations are not standardised — they are free text entered by authors or publishers with varying conventions for ordering, punctuation, and abbreviation. Some end with a full stop, some do not. Some include postal codes, some do not. Country names appear variously as "UK", "United Kingdom", "U.K.", "China", "P.R. China". The mask profiler confirms what anyone who has worked with bibliographic data already knows: affiliation strings are the messiest field in any publication database. But it also quantifies the mess — 1,200+ structural variants for 2,059 values means almost no two affiliations have the same structure.</p>
+<h3 id="publication-date--optional-components"><a class="header" href="#publication-date--optional-components">Publication Date — Optional Components</a></h3>
+<p>The profiler reveals that publication date components have different population levels:</p>
+<pre><code>Field Path                              Values
+PubDate.Year                              200   (100%)
+PubDate.Month                             200   (100%)
+PubDate.Day                               200   (100%)
+PubDate.Season                              2   (1%)
+</code></pre>
+<p>Year and Month are always present. Day is present for all 200 articles in this sample. But Season appears in 2 articles — a PubMed convention for journals that publish quarterly rather than on specific dates. The masks confirm the expected formats:</p>
+<pre><code>PubDate.Year:   9999  (200 values, e.g. "2026")
+PubDate.Month:  Aaa   (200 values, e.g. "Feb")
+PubDate.Day:    99    (200 values, e.g. "22")
+PubDate.Season: Aa-Aa   (2 values, e.g. "Jan-Mar")
+</code></pre>
+<p>Month is a three-letter abbreviation, not a number. Day is a zero-padded two-digit number. Season is a hyphenated month range. Any date-parsing logic needs to handle all three conventions — and the presence of Season means you cannot simply concatenate Year + Month + Day for every record.</p>
+<h3 id="abstract-structure-labels"><a class="header" href="#abstract-structure-labels">Abstract Structure Labels</a></h3>
+<p><code>Abstract.AbstractText.@Label</code></p>
+<pre><code>Mask            Count   Example
+AAAAAAA            50   METHODS
+AAAAAAAAAA         43   BACKGROUND
+AAAA               34   AIMS
+AAAAAAA            33   RESULTS
+</code></pre>
+<p>All-uppercase labels — a consistent convention. But the <code>@NlmCategory</code> attribute (247 values vs 253 labels) shows that 6 labels lack an NLM category mapping. These are likely non-standard section labels that do not fit NLM's controlled vocabulary.</p>
+<h2 id="summary-of-findings"><a class="header" href="#summary-of-findings">Summary of Findings</a></h2>
+<p>Issues and observations discovered through mask-based profiling of 200 PubMed articles (1,696 authors):</p>
+<p><strong>Author name diversity:</strong></p>
+<ul>
+<li>45+ distinct mask patterns for last names — single-word ASCII names dominate (81.5%) but hyphenated (3.6%), multi-part (1.7%), and particle-prefixed names (1.1%) are significant minorities</li>
+<li>3 single-letter surnames (<code>M</code>, <code>K</code>) → <strong>Investigate:</strong> likely data entry errors or mono-name authors forced into a two-field schema</li>
+<li>1 leading-hyphen surname (<code>-Akotet</code>) → <strong>Flag:</strong> data entry error, missing first component of compound name</li>
+<li>146 single-initial forenames (8.6%) → <strong>Flag:</strong> significant loss of identity information</li>
+</ul>
+<p><strong>XML entity encoding:</strong></p>
+<ul>
+<li>Diacritical characters consistently encoded as XML numeric character references (<code>&amp;#xe4;</code> rather than raw <code>ä</code>) → <strong>Document:</strong> downstream systems must resolve entities before string operations</li>
+<li>Entity-encoded names produce distinctive mask patterns that cleanly separate them from ASCII-only names</li>
+<li>Affects ~19 surnames and ~7 forenames in this sample — Finnish, Swedish, French, Spanish, Polish, Slovenian, Turkish, and Irish names</li>
+</ul>
+<p><strong>Identifier data quality:</strong></p>
+<ul>
+<li>ORCID coverage: 20.8% of authors (353 of 1,696) → <strong>Flag:</strong> low coverage limits author disambiguation</li>
+<li>Affiliation identifiers: 4 different schemes (ROR, GRID, ISNI, numeric) mixed in a single field, all mislabelled as <code>@Source="ROR"</code> → <strong>Flag:</strong> metadata quality error</li>
+<li>ORCID format: clean, two structural variants (numeric and X-check), no anomalies</li>
+</ul>
+<p><strong>Structural sparsity:</strong></p>
+<ul>
+<li>CollectiveName (3 records): group/consortium authorships that lack LastName/ForeName → <strong>Handle:</strong> different code path required</li>
+<li>Suffix (1 record): "Jr" — rare but must be accommodated</li>
+<li>EqualContrib (72 authors): annotation for equal contribution, present on ~4% of authors</li>
+<li>PubDate.Season (2 records): quarterly publication dates in a different format from Month+Day</li>
+</ul>
+<p><strong>Affiliation strings:</strong></p>
+<ul>
+<li>1,200+ structural variants for 2,059 values → <strong>Accept:</strong> free-text field, not amenable to structural standardisation</li>
+<li>Missing affiliations: some authors have zero affiliation elements → <strong>Investigate:</strong> count authors with no AffiliationInfo child</li>
+</ul>
+<h2 id="lessons-learned"><a class="header" href="#lessons-learned">Lessons Learned</a></h2>
+<p><strong>1. XML is just another serialisation format.</strong> The SAX streaming parser flattens XML into dot-notation paths exactly as the JSON parser flattens nested objects. Attributes become <code>@</code>-prefixed fields. Repeated elements become multiple values at the same path. The profiling output is structurally identical to what you would get from the same data encoded in JSON. If you know how to read a bytefreq profile of JSON, you know how to read one of XML.</p>
+<p><strong>2. Entity references are a format-specific data quality concern.</strong> JSON escapes non-ASCII characters with <code>\uXXXX</code> sequences. XML uses numeric character references (<code>&amp;#xNN;</code>) or named entities (<code>&amp;amp;</code>). In both cases, the profiler sees the encoded form, not the resolved character — and the mask reveals the encoding. This is a feature, not a limitation: you need to know whether your data contains raw UTF-8 or entity-encoded characters before you can process it correctly. The mask profiler tells you which you have, and whether the encoding is consistent.</p>
+<p><strong>3. Population analysis across nested elements requires care.</strong> In flat tabular data, "field X has 180 values out of 200 rows" is unambiguous. In XML with repeated elements, "AuthorList.Author.Identifier has 353 values" must be interpreted against the total author count (1,696), not the article count (200). The profiler gives you value counts per path; you must bring the structural context — the knowledge that Author is a repeating element within each article — to calculate meaningful percentages.</p>
+<p><strong>4. International names break simple assumptions.</strong> Any system that assumes a last name is a single ASCII word will fail on 18.5% of the authors in this dataset. Hyphenated names, particle prefixes (<code>de</code>, <code>van der</code>, <code>Al-</code>), Celtic prefixes (<code>Mc</code>, <code>Mac</code>), diacritical characters, and multi-word surnames are not edge cases — they are a structural feature of international biomedical authorship. The mask profiler quantifies their prevalence and classifies them by structural type, providing the specification for a name-handling system that actually works.</p>
+<p><strong>5. Mixed identifier schemes in a single field are discoverable through masks.</strong> The affiliation identifier field contains ROR URLs, GRID IDs, ISNI numbers, and bare numeric codes — four structurally distinct identifier schemes — all tagged with <code>@Source="ROR"</code>. Without mask profiling, you would discover this only when your ROR lookup fails for 30% of the identifiers. With profiling, the four structural patterns are visible before you write any processing code.</p>
+<p><strong>6. The same technique, three formats, three languages.</strong> This book has now profiled pipe-delimited CSV from a UK company register (English), nested JSON from a Japanese earthquake API (Japanese and English), and XML from a US biomedical literature database (international names in Latin script with diacritics). The masking technique, the grain levels, the field population analysis, and the interpretation approach are identical across all three. The data changes. The method does not.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="worked-example-hatvp-lobbyists.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="about.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="worked-example-hatvp-lobbyists.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="about.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

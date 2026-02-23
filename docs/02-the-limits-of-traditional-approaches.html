@@ -1,0 +1,230 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>The Limits of Traditional Approaches - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/02-the-limits-of-traditional-approaches.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="the-limits-of-traditional-approaches"><a class="header" href="#the-limits-of-traditional-approaches">The Limits of Traditional Approaches</a></h1>
+<p>Before introducing mask-based profiling, it is worth understanding why the existing approaches leave gaps. Not because they are bad — many of them are excellent at what they do — but because they share a common assumption that limits their applicability to the "quality on read" problem.</p>
+<h2 id="schema-validation"><a class="header" href="#schema-validation">Schema Validation</a></h2>
+<p>The most established approach to data quality is schema validation: define the expected types, formats, and constraints for each field, then reject or flag records that do not conform. This is the approach used by database constraints, JSON Schema, XML Schema (XSD), Avro, Protobuf, and a host of other technologies. It works well in systems where you control the schema and the data is produced by software that respects it.</p>
+<p>The limitation is that schema validation requires you to know what the data should look like before you receive it. When you are exploring a new dataset — a third-party feed you have never seen before, an open data portal with sparse documentation, or a legacy system export where the specification was written ten years ago and has not been updated since — the schema is precisely the thing you are trying to discover. Validating against an assumed schema at this stage risks either rejecting valid data that does not match your assumptions, or accepting invalid data that happens to pass your checks by coincidence.</p>
+<p>There is also the problem of data that is "technically valid" but semantically broken. A date field containing <code>0000-00-00</code> will pass a format check for <code>YYYY-MM-DD</code> but is clearly not a real date. A numeric field containing <code>999999</code> will pass a type check but may be a sentinel value meaning "not applicable." Schema validation catches structural violations but tells you nothing about whether the values themselves make sense.</p>
+<h2 id="statistical-profiling"><a class="header" href="#statistical-profiling">Statistical Profiling</a></h2>
+<p>Tools like Great Expectations, dbt tests, and pandas-profiling take a different approach: compute summary statistics for each column (null counts, min/max values, cardinality, distributions, standard deviations) and flag deviations from expected ranges. This is useful for ongoing monitoring of data pipelines where you have a baseline to compare against, and it catches population-level issues (sudden spikes in nulls, unexpected changes in cardinality) that schema validation misses.</p>
+<p>The limitation is that aggregate statistics hide structural detail. A column with 99% valid email addresses and 1% phone numbers will report a cardinality, a null rate, and a string length distribution that all look reasonable. The phone numbers — wrong data in the wrong field — will not appear as outliers in any statistical measure because they are structurally similar to emails in terms of length and character composition. You need to see the <em>patterns</em> to spot the problem, and summary statistics do not show patterns.</p>
+<p>Statistical methods also require a baseline: they tell you that something has changed, but not what the data looks like in the first place. For initial exploration of an unfamiliar dataset, they give you numbers without context.</p>
+<h2 id="regex-based-validation"><a class="header" href="#regex-based-validation">Regex-Based Validation</a></h2>
+<p>Regular expressions allow precise format validation: a UK postcode matches <code>[A-Z]{1,2}[0-9R][0-9A-Z]? [0-9][ABD-HJLNP-UW-Z]{2}</code>, an email matches a well-known (and notoriously complex) pattern, a date matches <code>\d{4}-\d{2}-\d{2}</code>. When you know exactly what formats to expect, regex validation is powerful and precise.</p>
+<p>The limitation is combinatorial. Each expected format requires its own expression. A phone number column that contains UK mobiles, UK landlines, international numbers with country codes, and US-formatted numbers needs at least four regex patterns — and that is before you account for variations in spacing, punctuation, and prefix formatting. For every new format you discover, you write another regex. For every field in every dataset, you maintain a library of patterns. The approach does not scale to exploratory work where you do not yet know what formats exist.</p>
+<p>More fundamentally, regex validation is a <em>confirmation</em> technique: it confirms that data matches a pattern you already know about. It does not help you <em>discover</em> what patterns exist in data you have never seen before. Discovery requires a different tool.</p>
+<h2 id="what-they-all-share"><a class="header" href="#what-they-all-share">What They All Share</a></h2>
+<p>All three approaches — schema validation, statistical profiling, and regex-based validation — share a common assumption: <strong>you already know what the data should look like</strong>. They are verification techniques, designed to confirm expectations. When those expectations are correct and the data is well-understood, they work beautifully.</p>
+<p>The gap they leave is in <em>discovery</em>: the initial exploration of unfamiliar data, where you have no schema, no baseline statistics, and no library of expected formats. You need something that will show you what the data <em>does</em> look like, without requiring you to tell it what to look <em>for</em>. That is the role of mask-based profiling.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="01-why-data-quality-still-breaks-things.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="03-schema-on-read-quality-on-read.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="01-why-data-quality-still-breaks-things.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="03-schema-on-read-quality-on-read.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

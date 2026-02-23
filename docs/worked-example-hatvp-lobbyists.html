@@ -1,0 +1,545 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Worked Example: Profiling the French Lobbyist Registry - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/worked-example-hatvp-lobbyists.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="worked-example-profiling-the-french-lobbyist-registry-hatvp" class="unnumbered"><a class="header" href="#worked-example-profiling-the-french-lobbyist-registry-hatvp">Worked Example: Profiling the French Lobbyist Registry (HATVP)</a></h1>
+<p>This appendix profiles a real French government transparency dataset — the lobbyist registry maintained by the Haute Autorité pour la transparence de la vie publique (HATVP). Where the Companies House example demonstrated mask-based profiling on tabular CSV data and the JMA earthquake example tackled nested JSON with mixed scripts, this dataset brings a different set of challenges: deeply nested JSON with French-language text, accented characters, text-encoded numeric ranges masquerading as quantitative fields, and casing inconsistencies rooted in French administrative conventions. The result is a worked example that shows how bytefreq profiling surfaces issues that neither schemas nor simple validation rules would catch.</p>
+<h2 id="the-dataset"><a class="header" href="#the-dataset">The Dataset</a></h2>
+<p>The HATVP publishes a consolidated JSON file of all organisations registered in the French lobbyist registry, updated nightly and freely available under the Licence Ouverte (Etalab) — France's standard open data licence. The file is available at <a href="https://www.hatvp.fr/agora/opendata/agora_repertoire_opendata.json">hatvp.fr/agora/opendata/agora_repertoire_opendata.json</a> and weighs in at approximately 116MB.</p>
+<p>Each record represents a registered lobbying organisation and contains its denomination, address, national identifier, directors, collaborators, clients, sector classifications, multi-year exercise declarations with nested activity reports, expenditure bands, revenue bands, and contact information. The nesting is substantial: a single organisation record can contain arrays of directors (each with name, title, and role), arrays of collaborators, arrays of clients, and multiple annual exercise declarations each containing their own nested activity structures.</p>
+<p>For this example we sampled 405 records from the full file. After flattening the nested JSON (collapsing array indices so that <code>dirigeants[0].nom</code> and <code>dirigeants[1].nom</code> both become <code>dirigeants.nom</code>), these 405 records produced 81 unique field paths — a reflection of the structural depth of the data. Key paths and their value counts illustrate the one-to-many relationships: <code>denomination</code> yields 405 values (one per organisation), <code>dirigeants.nom</code> yields 760 (multiple directors per organisation), <code>collaborateurs.nom</code> yields 946, <code>clients.denomination</code> yields 1,130, and <code>activites.listSecteursActivites.label</code> yields 2,119 sector tags spread across the sample.</p>
+<h2 id="running-the-profile"><a class="header" href="#running-the-profile">Running the Profile</a></h2>
+<p>Because this is nested JSON rather than flat tabular data, we use the same flatten-then-profile approach described in the JMA earthquake example. The JSON is first flattened into field-path/value pairs, collapsing array indices, and then profiled using bytefreq in LU (Low-grain Unicode) mode. The flattening preserves the hierarchical field names — <code>exercices.publicationCourante.montantDepense</code> rather than a generic column number — which makes the profile output immediately readable without needing to cross-reference a schema.</p>
+<p>The LU grain is the right starting point here. It collapses consecutive characters of the same class (uppercase, lowercase, digit, punctuation) into single representative characters, giving us a compact set of structural masks for each field. Where we need finer discrimination — as we will see with the <code>dirigeants.civilite</code> field — we can drill into HU (High-grain Unicode) mode for specific fields.</p>
+<h2 id="structure-discovery-field-population-analysis"><a class="header" href="#structure-discovery-field-population-analysis">Structure Discovery: Field Population Analysis</a></h2>
+<p>Before examining individual field values, we profile the field paths themselves. For each dot-notation path (with array indices collapsed), we count how many of the 405 lobbyist records contain that path and express it as a percentage. This is the structural discovery step — it tells us the shape of the data before we look at what is in it.</p>
+<pre><code>Field Path                                                            Count  % Populated
+-----------------------------------------------------------------------------------------
+denomination                                                            405     100.0%
+typeIdentifiantNational                                                 405     100.0%
+identifiantNational                                                     405     100.0%
+codePostal                                                              405     100.0%
+ville                                                                   405     100.0%
+pays                                                                    405     100.0%
+dateCreation                                                            405     100.0%
+datePremierePublication                                                 405     100.0%
+categorieOrganisation.code                                              405     100.0%
+categorieOrganisation.label                                             405     100.0%
+categorieOrganisation.categorie                                         405     100.0%
+activites.listSecteursActivites.code                                    405     100.0%
+activites.listSecteursActivites.label                                   405     100.0%
+activites.listNiveauIntervention.code                                   405     100.0%
+dirigeants.nom                                                          366      90.4%
+dirigeants.prenom                                                       366      90.4%
+dirigeants.civilite                                                     366      90.4%
+dirigeants.fonction                                                     366      90.4%
+collaborateurs.nom                                                      366      90.4%
+collaborateurs.civilite                                                 366      90.4%
+collaborateurs.fonction                                                 271      66.9%
+exercices.publicationCourante.dateDebut                                 403      99.5%
+exercices.publicationCourante.dateFin                                   403      99.5%
+exercices.publicationCourante.nombreSalaries                            315      77.8%
+exercices.publicationCourante.montantDepense                            315      77.8%
+exercices.publicationCourante.chiffreAffaire                            163      40.2%
+lienSiteWeb                                                             304      75.1%
+adresse                                                                 306      75.6%
+lienPageLinkedin                                                        196      48.4%
+emailDeContact                                                          169      41.7%
+lienPageTwitter                                                         140      34.6%
+telephoneDeContact                                                      132      32.6%
+lienPageFacebook                                                        116      28.6%
+clients.denomination                                                     88      21.7%
+nomUsage                                                                205      50.6%
+dateDernierePublicationActivite                                         301      74.3%
+lienListeTiers                                                           21       5.2%
+nomUsageHatvp                                                            44      10.9%
+sigleHatvp                                                               51      12.6%
+dateCessation                                                            39       9.6%
+motifDesinscription                                                      39       9.6%
+ancienNomHatvp                                                            2       0.5%
+exercices.publicationCourante.activites...actionsRepresentationInteret.observation   151  37.3%
+</code></pre>
+<p>The registration core — name, identifier, postal code, city, country, dates, category, sectors — is 100% populated across all 405 records. These are mandatory registration fields, the skeleton that every lobbyist record shares. When we see a block of fields all at 100%, it confirms that the registration system enforces these as required inputs, and it gives us a stable foundation to work from when we start profiling values.</p>
+<p>Director and collaborator names are 90.4% populated — but <code>collaborateurs.fonction</code> drops to 66.9%. A third of collaborators have no declared role. This is a data completeness issue hiding inside the nesting: the person exists in the array, but their function field is missing. A flat schema would show this as a null column. In nested JSON, the key simply is not present in some array elements. The profiler treats both the same way, which is why the flatten-then-profile approach works so well for this kind of discovery.</p>
+<p>Financial data tells a story of progressive disclosure. <code>exercices.publicationCourante.dateDebut</code> is 99.5% (nearly universal), but <code>nombreSalaries</code> and <code>montantDepense</code> drop to 77.8%, and <code>chiffreAffaire</code> (revenue) falls to just 40.2%. Organisations are required to declare exercise periods but increasingly opt out of financial detail. Revenue is the most sensitive field, and fewer than half disclose it. The field population percentages quantify this reluctance in a way that no amount of manual inspection could — you see the gradient from near-universal to minority compliance in a single column of numbers.</p>
+<p>Contact and social media fields follow a clear hierarchy: website (75.1%) &gt; LinkedIn (48.4%) &gt; email (41.7%) &gt; Twitter (34.6%) &gt; phone (32.6%) &gt; Facebook (28.6%). This is not random — it reflects institutional communication preferences. Websites are near-universal for organisations, LinkedIn is the professional default, and Facebook has fallen out of favour for institutional lobbying. The field population percentages tell you this without reading a single value.</p>
+<p>At the bottom of the table, operational fields appear: <code>dateCessation</code> and <code>motifDesinscription</code> (9.6%) mark organisations that have de-registered from the lobbying register, <code>ancienNomHatvp</code> (0.5%) records name changes — just 2 out of 405. These sparse fields are invisible in a casual inspection of the data but the population analysis surfaces them immediately. They are the kind of fields that cause edge-case bugs in downstream processing because developers never encounter them during testing.</p>
+<h2 id="field-by-field-analysis"><a class="header" href="#field-by-field-analysis">Field-by-Field Analysis</a></h2>
+<h3 id="organisation-name-denomination"><a class="header" href="#organisation-name-denomination">Organisation Name (denomination)</a></h3>
+<p><code>denomination</code></p>
+<pre><code>Mask              Count   Example
+A A                  65   OTRE GIRONDE
+A                    62   DOMISERVE
+A A A                55   REUSABLE PACKAGING EUROPE
+A A A A              31   BNP PARIBAS PERSONAL FINANCE
+A A A A A A          24   OTRE DES PAYS DE LA LOIRE
+A A A A A            23   UNION DES ENTREPRISES CORSES
+A A A A A A A        12   NESTLE EXCELLENCE SAS PRODUITS PETI
+A_A A                 3   MCDONALD'S FRANCE
+A _                   2   TUKAZZA !
+A 9                   2   FNSEA 17
+</code></pre>
+<p>The dominant masks are exactly what we would expect for organisation names in uppercase: one to seven words separated by spaces, all collapsing to <code>A</code> tokens. The interesting patterns are at the bottom. <code>A_A A</code> (3 records, e.g. <code>MCDONALD'S FRANCE</code>) — the apostrophe is a punctuation character, creating a distinct structural mask. <code>A _</code> (2 records, e.g. <code>TUKAZZA !</code>) — an exclamation mark, which bytefreq maps to the punctuation class. And <code>A 9</code> (2 records, e.g. <code>FNSEA 17</code>) — a numeric suffix, likely a regional chapter number.</p>
+<p>None of these are errors per se — they are legitimate organisation names. But the masks tell us immediately that any downstream process relying on "organisation names are alphabetic words separated by spaces" will need to account for apostrophes, punctuation marks, and trailing numbers. The mask frequency table is the specification that the data never came with.</p>
+<h3 id="address-adresse"><a class="header" href="#address-adresse">Address (adresse)</a></h3>
+<p><code>adresse</code></p>
+<pre><code>Mask              Count   Example
+9 A A A              76   169 RUE D'ANJOU
+9 A A                50   60 BOULEVARD VOLTAIRE
+A A                  30   ZONE INDUSTRIELLE
+A                    29   AMYNOS
+A A A                27   ASSOCIATION DES CONSOMMATEURS
+9 A A A A            21   49 RUE EVARISTE GALOIS
+9 A                  17   75 BDVOLTAIRE
+A A A A              17   CITE DE L INDUSTRIE
+A 9                  13   CS 70044
+9 a Aa                7   79 rue Perrier
+9 a Aa Aa             6   2 avenue Tony Garnier
+A 9 A A A             2   BP 123 CHERBOURG EN COTENTIN
+</code></pre>
+<p>306 of 405 records have an address; 99 are empty (a 24.4% null rate). The dominant patterns start with a street number followed by uppercase street names (<code>9 A A A</code>: <code>169 RUE D'ANJOU</code>), which is the standard French address format. But several things stand out.</p>
+<p>First, mixed casing. The majority of addresses are in uppercase (<code>169 RUE D'ANJOU</code>, <code>60 BOULEVARD VOLTAIRE</code>), which is the traditional French postal convention for addresses. But 13 records use title case or mixed case (<code>79 rue Perrier</code>, <code>2 avenue Tony Garnier</code>). The masks <code>9 a Aa</code> and <code>9 a Aa Aa</code> are structurally different from <code>9 A A</code> precisely because of this casing inconsistency — the profiler is separating records that a human might gloss over as "same thing, different capitalisation."</p>
+<p>Second, non-address content. The masks <code>A</code> (29 records, e.g. <code>AMYNOS</code>) and <code>A A A</code> (27 records, e.g. <code>ASSOCIATION DES CONSOMMATEURS</code>) contain organisation names rather than street addresses. The address field is being used to store building names or organisation references.</p>
+<p>Third, postal box codes. <code>A 9</code> (13 records, e.g. <code>CS 70044</code>) represents CEDEX sorting codes — a French postal routing system. <code>A 9 A A A</code> (2 records, e.g. <code>BP 123 CHERBOURG EN COTENTIN</code>) combines a boîte postale (PO box) number with a city name, packing two logical fields into one.</p>
+<h3 id="postal-code-codepostal"><a class="header" href="#postal-code-codepostal">Postal Code (codePostal)</a></h3>
+<p><code>codePostal</code></p>
+<pre><code>Mask        Count   Example
+9             401   75019
+ 9              2   1000
+A9A9A           1   EC1R4QB
+</code></pre>
+<p>Three masks, and each tells a different story. The dominant <code>9</code> (401 records, 99.0%) represents standard five-digit French postal codes like <code>75019</code>. Clean, consistent, no issues.</p>
+<p>The <code> 9</code> mask (2 records, e.g. <code>1000</code>) has a leading space — note the space before the <code>9</code> in the mask. These are four-digit codes with space padding, likely Belgian postcodes (Belgium uses four-digit postal codes). Two Belgian organisations registered in the French lobbyist registry, and the source system padded their codes with a leading space rather than handling the shorter format.</p>
+<p>And then there is <code>A9A9A</code> (1 record: <code>EC1R4QB</code>). That is a UK postcode — an alphanumeric format that is structurally unmistakable in a field of French five-digit codes. A British organisation registered in the French lobbyist registry, and the postal code field accepted whatever was submitted. The mask catches it instantly because the structural pattern is completely unlike the surrounding data.</p>
+<h3 id="city-ville"><a class="header" href="#city-ville">City (ville)</a></h3>
+<p><code>ville</code></p>
+<pre><code>Mask              Count   Example
+A                   211   BEAUNE
+A 9                  52   PARIS 16
+A A                  29   NANTERRE CEDEX
+A-A                  24   LAMBALLE-ARMOR
+Aa                   21   Paris
+A-A-A                15   (various hyphenated)
+A A A                10   LE BOURGET CEDEX
+A A 9                10   PARIS CEDEX 07
+Aa-a-Aa               3   Neuilly-sur-Seine
+Aa a Aa               2   Neuilly sur Seine
+A 9A                   2   LYON 3EME
+a                      1   avignon
+A - A A               1   COURBEVOIE - LA DEFENSE
+A A_ A                1   VILLEBON S/ YVETTE
+A A Aa 9              1   LE MANS Cedex 2
+</code></pre>
+<p>This field is a catalogue of French address conventions and casing inconsistency, all visible through the masks.</p>
+<p>Casing: <code>A</code> (211 records, <code>BEAUNE</code>) is uppercase. <code>Aa</code> (21 records, <code>Paris</code>) is title case. <code>a</code> (1 record, <code>avignon</code>) is entirely lowercase. Three different casing conventions for the same type of data, in the same field, in the same dataset.</p>
+<p>CEDEX variations: <code>A A</code> (29 records, <code>NANTERRE CEDEX</code>), <code>A A A</code> (10 records, <code>LE BOURGET CEDEX</code>), <code>A A 9</code> (10 records, <code>PARIS CEDEX 07</code>), <code>A A Aa 9</code> (1 record, <code>LE MANS Cedex 2</code>). The postal routing suffix CEDEX appears in uppercase (<code>CEDEX</code>) and in title case (<code>Cedex</code>) — and the numeric arrondissement that follows it is sometimes present, sometimes not.</p>
+<p>Hyphenation: <code>A-A</code> (24 records, <code>LAMBALLE-ARMOR</code>) and <code>A-A-A</code> (15 records) are hyphenated town names in uppercase. <code>Aa-a-Aa</code> (3 records, <code>Neuilly-sur-Seine</code>) is hyphenated in title case. <code>Aa a Aa</code> (2 records, <code>Neuilly sur Seine</code>) is the same town name without hyphens. The profiler reveals that <code>Neuilly-sur-Seine</code> and <code>Neuilly sur Seine</code> coexist in the data — same place, different punctuation, different masks.</p>
+<p>And then the distinctly French conventions: <code>A A_ A</code> (1 record, <code>VILLEBON S/ YVETTE</code>) uses <code>S/</code> as an abbreviation for "sur" (on/upon), a convention specific to French administrative addressing. <code>A 9A</code> (2 records, <code>LYON 3EME</code>) uses the arrondissement suffix <code>3EME</code> (3rd) — the ordinal marker <code>EME</code> being the French equivalent of English "rd" or "th."</p>
+<h3 id="country-pays"><a class="header" href="#country-pays">Country (pays)</a></h3>
+<p><code>pays</code></p>
+<pre><code>Mask        Count   Example
+A             375   FRANCE
+Aa             22   France
+A-A             1   ROYAUME-UNI
+a               1   france
+</code></pre>
+<p>Four masks, essentially two country values. <code>FRANCE</code> appears in three casing variants: uppercase (375), title case (22), and lowercase (1). The fourth mask, <code>A-A</code>, is <code>ROYAUME-UNI</code> — the French name for the United Kingdom, hyphenated as is standard in French. This is the same British organisation whose UK postcode we found in the <code>codePostal</code> field.</p>
+<p>The real issue here is not the lone UK record — it is the casing inconsistency. 375 records say <code>FRANCE</code>, 22 say <code>France</code>, 1 says <code>france</code>. These are not three different countries. A downstream join or group-by on this field will produce three separate buckets for the same value unless casing is normalised first. The profiler makes this immediately obvious because each casing variant produces a different mask.</p>
+<h3 id="organisation-category-categorieorganisationlabel"><a class="header" href="#organisation-category-categorieorganisationlabel">Organisation Category (categorieOrganisation.label)</a></h3>
+<p><code>categorieOrganisation.label</code></p>
+<pre><code>Mask                                                          Count   Example
+Aa a a a _a a a a_a a a a a_                                    128   Société commerciale et civile (autre que cabinet d'avocats et société de conseil)
+Aa                                                               89   Association
+Aa a                                                             83   Fédération professionnelle
+Aa a a a                                                         58   Organisation non gouvernementale
+Aa a a                                                           40   Cabinet de conseil
+Aa a a _a a_                                                      2   Groupe de recherche (think tank)
+Aa a a a a a a a                                                  2   Établissement public ou organisme consultatif
+</code></pre>
+<p>French category labels with accented characters (<code>Société</code>, <code>Fédération</code>, <code>Établissement</code>), apostrophes (<code>d'avocats</code>), and parenthetical qualifiers (<code>(autre que cabinet d'avocats et société de conseil)</code>, <code>(think tank)</code>). This is a controlled vocabulary — seven distinct values with consistent formatting. The masks here are doing their job: confirming that the reference data is clean and internally consistent.</p>
+<p>Note that LU mode treats accented characters (é, è, ê) the same as their unaccented counterparts — they are all lowercase letters, collapsing to <code>a</code>. This is the correct behaviour for structural profiling: we care about the shape of the data, not the specific diacritics.</p>
+<h3 id="directors-title-dirigeantscivilite"><a class="header" href="#directors-title-dirigeantscivilite">Directors: Title (dirigeants.civilite)</a></h3>
+<p><code>dirigeants.civilite</code></p>
+<pre><code>Mask    Count   Example
+A         760   M
+</code></pre>
+<p>A single mask: <code>A</code>. Every value collapses to uppercase alpha. But this field contains two distinct values — <code>M</code> (Monsieur) and <code>MME</code> (Madame) — which LU mode cannot distinguish because both are uppercase alphabetic strings. The mask <code>A</code> covers both a one-character and a three-character value.</p>
+<p>This is a case where you would drill into HU (High-grain Unicode) mode, which preserves character count, to separate <code>M</code> from <code>MME</code> and get the gender distribution. At LU grain, the field looks perfectly uniform. At HU grain, the two populations would separate cleanly. It is a useful reminder that profiling grain is a choice, and the right grain depends on the question you are asking.</p>
+<h3 id="directors-surname-dirigeantsnom"><a class="header" href="#directors-surname-dirigeantsnom">Directors: Surname (dirigeants.nom)</a></h3>
+<p><code>dirigeants.nom</code></p>
+<pre><code>Mask        Count   Example
+A             684   DENIZOT
+A A            43   LE LETTY
+A-A            22   VESQUE-JEANCARD
+A_A             4   N'GOADMY
+A A A           3   DUBARRY DE LASSALLE
+A A A A         2   VAN LIDTH DE JEUDE
+A A_A           1   TEYSSIER D'ORFEUIL
+</code></pre>
+<p>French surname patterns, each structurally distinct and all legitimate. Single surnames (<code>A</code>, 684 records) dominate. Compound surnames with particles appear in several forms: space-separated (<code>A A</code>: <code>LE LETTY</code>, <code>A A A</code>: <code>DUBARRY DE LASSALLE</code>, <code>A A A A</code>: <code>VAN LIDTH DE JEUDE</code>), hyphenated (<code>A-A</code>: <code>VESQUE-JEANCARD</code>), and apostrophe-linked (<code>A_A</code>: <code>N'GOADMY</code>, <code>A A_A</code>: <code>TEYSSIER D'ORFEUIL</code>).</p>
+<p>The apostrophe in French surnames (as in <code>D'ORFEUIL</code>, <code>N'GOADMY</code>) is structurally significant — it creates a different mask from a space-separated particle. Any normalisation logic that strips apostrophes or treats them as word boundaries will mangle these names. The mask frequency table is essentially a specification for a surname parser: here are the seven structural patterns you need to handle.</p>
+<h3 id="directors-first-name-dirigeantsprenom"><a class="header" href="#directors-first-name-dirigeantsprenom">Directors: First Name (dirigeants.prenom)</a></h3>
+<p><code>dirigeants.prenom</code></p>
+<pre><code>Mask        Count   Example
+Aa            697   Carole
+Aa-Aa          50   Marc-Antoine
+Aa Aa          11   Marie Christine
+Aa_a            1   Ro!and
+</code></pre>
+<p>The first three masks are expected: simple first names in title case (<code>Aa</code>, 697 records), hyphenated compound first names (<code>Aa-Aa</code>, 50 records — a very common French pattern, as in <code>Marc-Antoine</code>, <code>Jean-Pierre</code>), and space-separated compound first names (<code>Aa Aa</code>, 11 records — <code>Marie Christine</code>, where the hyphen was omitted).</p>
+<p>The fourth mask is the standout of the entire dataset. <code>Aa_a</code> (1 record: <code>Ro!and</code>). An exclamation mark where the letter <code>l</code> should be. The intended name is <code>Roland</code>, but a data entry error — likely a mis-hit on an adjacent key — has replaced the lowercase <code>l</code> with <code>!</code>. The mask catches it instantly because <code>!</code> is a punctuation character, not a letter, so the structural pattern <code>Aa_a</code> (letter-class, letter-class, punctuation-class, letter-class) is fundamentally different from the expected <code>Aa</code> (letter-class, letter-class). One character wrong, and the mask is completely different.</p>
+<p>This single record is worth the entire profiling exercise as a demonstration. No schema would catch it — the field is a valid string. No length check would catch it — <code>Ro!and</code> is six characters, perfectly reasonable for a first name. No lookup table would catch it unless you had an exhaustive dictionary of every possible French first name. But the structural profile catches it immediately, because the shape of the data is wrong. That is the core proposition of mask-based profiling, illustrated in a single record.</p>
+<h3 id="directors-role-dirigeantsfonction"><a class="header" href="#directors-role-dirigeantsfonction">Directors: Role (dirigeants.fonction)</a></h3>
+<p><code>dirigeants.fonction</code></p>
+<pre><code>Mask                        Count   Example
+Aa                            278   Secrétaire
+Aa Aa                          92   Directeur Général
+Aa a                           74   Directeur général
+A                              44   PRESIDENT
+A A                            29   DIRECTEUR GENERAL
+Aa a Aa                        20   Président du Conseil
+Aa-Aa                          20   Vice-Président
+Aa a a                         19   Directeur exécutif
+Aa Aa Aa                       18   Directeur Général Adjoint
+Aa-a                           10   Vice-président
+a                               6   président
+Aa-Aa Aa                        6   Vice-Président Exécutif
+A-A                             4   CO-PRÉSIDENT
+4a Aa-Aa                        4   2ème Vice-Président
+</code></pre>
+<p>Three casing conventions coexist in a single field. Title case with all words capitalised (<code>Directeur Général</code>, mask <code>Aa Aa</code>, 92 records). Title case with French grammatical casing where articles and prepositions are lowercase (<code>Directeur général</code>, mask <code>Aa a</code>, 74 records). And all-caps (<code>PRESIDENT</code>, mask <code>A</code>, 44 records; <code>DIRECTEUR GENERAL</code>, mask <code>A A</code>, 29 records).</p>
+<p>The mask pair <code>Aa-Aa</code> (20 records, <code>Vice-Président</code>) versus <code>Aa-a</code> (10 records, <code>Vice-président</code>) is particularly revealing: the same role, with the only difference being whether the second element after the hyphen is capitalised. The profiler separates them because <code>Aa-Aa</code> and <code>Aa-a</code> are structurally different — and this tells us that different data entry operators or different source systems applied different capitalisation rules.</p>
+<p>The <code>4a</code> mask (4 records, <code>2ème Vice-Président</code>) captures the French ordinal suffix <code>ème</code> (equivalent to English "nd" or "th"), preceded by a digit. And the <code>a</code> mask (6 records, <code>président</code>) reveals entries in all lowercase — no initial capital at all.</p>
+<p>A treatment function for this field would need to normalise casing (choosing one convention), handle hyphenated roles, and decide what to do with ordinal prefixes. The mask frequency table tells you exactly what rules to write.</p>
+<h3 id="email-emaildecontact"><a class="header" href="#email-emaildecontact">Email (emailDeContact)</a></h3>
+<p><code>emailDeContact</code></p>
+<pre><code>Mask              Count   Example
+a_a.a                66   contact@cdcf.com
+a.a_a.a              23   jean.dupont@example.fr
+a_a-a.a              23   contact@france-industrie.org
+a_a.a.a               8   info@cabinet.avocat.fr
+a_a9.a                6   contact@euro4t.fr
+a-9_a.a               1   udtr-12@otre.fr
+</code></pre>
+<p>169 of 405 records have an email address; 236 are empty (58.3% null rate). The masks show the structural variation in email formats. In bytefreq output, the <code>@</code> symbol maps to the punctuation class and then collapses with adjacent punctuation or appears as <code>_</code> depending on surrounding characters. The dominant pattern <code>a_a.a</code> (66 records) represents the simplest form: <code>local@domain.tld</code>.</p>
+<p>Variations include dots in the local part (<code>a.a_a.a</code>: <code>jean.dupont@example.fr</code>), hyphens in the domain (<code>a_a-a.a</code>: <code>contact@france-industrie.org</code>), multi-level domains (<code>a_a.a.a</code>: <code>info@cabinet.avocat.fr</code>), numbers in the domain (<code>a_a9.a</code>: <code>contact@euro4t.fr</code>), and numbers with hyphens in the local part (<code>a-9_a.a</code>: <code>udtr-12@otre.fr</code>).</p>
+<p>No structural errors here — the patterns all represent valid email formats. The 58.3% null rate is the main finding: more than half of registered lobbying organisations have not provided a contact email.</p>
+<h3 id="expenditure-exercicespublicationcourantemontantdepense"><a class="header" href="#expenditure-exercicespublicationcourantemontantdepense">Expenditure (exercices.publicationCourante.montantDepense)</a></h3>
+<p><code>exercices.publicationCourante.montantDepense</code></p>
+<pre><code>Mask                                  Count   Example
+_ _ 9 9 a a _ 9 9 a                    580   &gt;= 75 000 euros et &lt; 100 000 euros
+_ 9 9 a                                455   &lt; 10 000 euros
+_ _ 9 9 9 a a _ 9 9 9 a                  8   &gt;= 3 250 000 euros et &lt; 5 000 000 euros
+_ _ 9 9 a a _ 9 9 9 a                    2   &gt;= 900 000 euros et &lt; 1 000 000 euros
+_ _ 9 9 9 a                              1   &gt;= 10 000 000 euros
+</code></pre>
+<p>This is one of the most instructive fields in the entire dataset. The expenditure column does not contain numbers. It contains French-language text descriptions of expenditure bands: <code>&gt;= 75 000 euros et &lt; 100 000 euros</code> — "greater than or equal to 75,000 euros and less than 100,000 euros."</p>
+<p>A schema will tell you this field is a string. A null check will tell you it is populated. A length check will tell you nothing useful. But the mask tells you immediately that this is not a numeric field — the presence of <code>a</code> (lowercase alpha) characters in the mask means there are words mixed in with the numbers. You cannot sum this column, you cannot compute averages, you cannot do arithmetic of any kind without first parsing the range text.</p>
+<p>The formatting follows French conventions: spaces as thousand separators (<code>75 000</code>, not <code>75,000</code>), <code>euros</code> as the currency word (not a symbol), and <code>et</code> (French for "and") as the conjunction between the lower and upper bounds. The five masks represent five expenditure bands, from <code>&lt; 10 000 euros</code> to <code>&gt;= 10 000 000 euros</code>.</p>
+<p>This pattern — encoding quantitative information as text ranges — is not uncommon in government datasets where the exact figure is considered sensitive but the band is public. The profiler reveals it immediately because the structural pattern of a text range is fundamentally different from the structural pattern of a number. A column of actual euro amounts would produce masks like <code>9</code> or <code>9.9</code> — not <code>_ _ 9 9 a a _ 9 9 a</code>.</p>
+<h3 id="revenue-band-exercicespublicationcourantechiffreaffaire"><a class="header" href="#revenue-band-exercicespublicationcourantechiffreaffaire">Revenue Band (exercices.publicationCourante.chiffreAffaire)</a></h3>
+<p><code>exercices.publicationCourante.chiffreAffaire</code></p>
+<pre><code>Mask                          Count   Example
+_ _ 9 9 9 a                    225   &gt;= 1 000 000 euros
+_ 9 9 a                        101   &lt; 100 000 euros
+_ _ 9 9 a a _ 9 9 a             65   &gt;= 100 000 euros et &lt; 500 000 euros
+_ _ 9 9 a a _ 9 9 9 a           41   &gt;= 500 000 euros et &lt; 1 000 000 euros
+</code></pre>
+<p>The same text-range pattern as expenditure. Four revenue bands rather than five, with the top band open-ended (<code>&gt;= 1 000 000 euros</code>). The same French formatting conventions apply: space thousands, text currency, <code>et</code> conjunction.</p>
+<p>The consistency between this field and <code>montantDepense</code> suggests a systematic encoding choice by the HATVP, not a one-off formatting quirk. Both financial fields use the same text-range approach, and both would need the same parsing treatment to extract usable numeric bounds.</p>
+<h3 id="employee-count-exercicespublicationcourantenombresalaries"><a class="header" href="#employee-count-exercicespublicationcourantenombresalaries">Employee Count (exercices.publicationCourante.nombreSalaries)</a></h3>
+<p><code>exercices.publicationCourante.nombreSalaries</code></p>
+<pre><code>Mask    Count   Example
+9.9     1,046   1.0
+</code></pre>
+<p>A single mask: <code>9.9</code>. Every value is a number with a decimal point and trailing zero — <code>1.0</code>, <code>25.0</code>, <code>350.0</code>. These are integers that have been serialised as floating-point numbers by the JSON encoder. The source system stores employee count as an integer, but somewhere in the serialisation pipeline the values were converted to floats, and the JSON output faithfully records <code>1.0</code> instead of <code>1</code>.</p>
+<p>This is a common issue with JSON data produced by systems that use loosely-typed numeric handling (Python's <code>json.dumps</code> with certain configurations, for example, or Java serialisers that map <code>Number</code> objects to <code>double</code>). The profiler catches it because the <code>.0</code> suffix creates a structural pattern (<code>9.9</code>) that is different from what we would expect for integer counts (<code>9</code>).</p>
+<p>The treatment is straightforward: parse as float, cast to integer, validate that the decimal portion is always <code>.0</code>. But you need to know the issue exists before you can treat it, and the mask tells you on the first profiling run.</p>
+<h3 id="website-liensiteweb"><a class="header" href="#website-liensiteweb">Website (lienSiteWeb)</a></h3>
+<p><code>lienSiteWeb</code></p>
+<pre><code>Mask              Count   Example
+a_a.a.a_             80   https://www.example.com/fr
+a_a.a.a              51   https://www.example.com
+a_a.a_               26   https://lfde.com/
+a_a.a-a.a_           23   https://www.france-industrie.org/
+a_a.a                12   https://lfde.com
+a_a-a.a_             12   http://france-biotech.fr/
+a_a9.a_               6   http://cci47.fr/
+</code></pre>
+<p>304 of 405 records have a website; 101 are empty. The masks capture several URL structure variations: with and without <code>www</code> prefix, with and without trailing slash, <code>http</code> versus <code>https</code>, hyphens in domain names, numbers in domain names, and path suffixes (e.g. <code>/fr</code> for French-language landing pages).</p>
+<p>The <code>a_a-a.a_</code> mask (12 records) represents <code>http://</code> (without TLS) — these organisations have not migrated to HTTPS. Not a data quality issue per se, but the mask separates them cleanly, which could feed a notification to affected organisations.</p>
+<h3 id="dates-exercicespublicationcourantedatedebut"><a class="header" href="#dates-exercicespublicationcourantedatedebut">Dates (exercices.publicationCourante.dateDebut)</a></h3>
+<p><code>exercices.publicationCourante.dateDebut</code></p>
+<pre><code>Mask    Count   Example
+9-9-9   1,953   01-04-2025
+</code></pre>
+<p>1,953 of 1,954 values share the same mask: <code>9-9-9</code>, representing the DD-MM-YYYY format with dashes. One value is presumably empty or structurally different — a single anomaly in nearly two thousand records. This is a well-controlled field with consistent formatting. The dash separator (rather than slash or dot) is the dominant French date convention in administrative systems.</p>
+<h3 id="national-identifier-identifiantnational"><a class="header" href="#national-identifier-identifiantnational">National Identifier (identifiantNational)</a></h3>
+<p><code>identifiantNational</code></p>
+<pre><code>Mask    Count   Example
+9         371   834715807
+A9         33   H810503325
+</code></pre>
+<p>Two masks, two distinct identifier systems. <code>9</code> (371 records) represents SIREN numbers — the nine-digit identifiers assigned to French commercial entities by INSEE (the national statistics office). <code>A9</code> (33 records) represents RNA numbers — identifiers from the Répertoire National des Associations, France's national register of non-profit associations. RNA numbers have a letter prefix (typically <code>W</code>) followed by digits.</p>
+<p>The mask separates commercial entities from non-profits instantly, without needing a lookup table or any domain knowledge beyond what the structural pattern reveals. A single character at the start of the identifier encodes the entity type, and the profiler surfaces it automatically.</p>
+<h2 id="summary-of-findings"><a class="header" href="#summary-of-findings">Summary of Findings</a></h2>
+<p>Issues discovered through mask-based profiling of 405 HATVP lobbyist registry records:</p>
+<p><strong>Text-encoded numeric ranges:</strong></p>
+<ul>
+<li><code>montantDepense</code> (expenditure) and <code>chiffreAffaire</code> (revenue) store French-language band descriptions, not numbers → <strong>Treatment:</strong> parse range text to extract numeric bounds</li>
+<li>Euro formatting uses French conventions: space thousands (<code>75 000</code>), text currency (<code>euros</code>), French conjunction (<code>et</code>) → any parser must handle these</li>
+</ul>
+<p><strong>Data entry errors:</strong></p>
+<ul>
+<li><code>Ro!and</code> in <code>dirigeants.prenom</code> — exclamation mark substituted for lowercase <code>l</code> → <strong>Treatment:</strong> manual correction to <code>Roland</code></li>
+</ul>
+<p><strong>Casing inconsistency:</strong></p>
+<ul>
+<li><code>pays</code>: three casings of <code>FRANCE</code> / <code>France</code> / <code>france</code> → <strong>Treatment:</strong> normalise to single form</li>
+<li><code>ville</code>: uppercase (<code>BEAUNE</code>), title case (<code>Paris</code>), lowercase (<code>avignon</code>) → <strong>Treatment:</strong> normalise casing</li>
+<li><code>dirigeants.fonction</code>: title case (<code>Directeur Général</code>), French grammatical case (<code>Directeur général</code>), all-caps (<code>PRESIDENT</code>), lowercase (<code>président</code>) → <strong>Treatment:</strong> normalise casing</li>
+<li><code>adresse</code>: mixed uppercase and title case (<code>RUE D'ANJOU</code> vs <code>rue Perrier</code>) → <strong>Treatment:</strong> normalise casing</li>
+</ul>
+<p><strong>Float serialisation of integers:</strong></p>
+<ul>
+<li><code>nombreSalaries</code>: all values have <code>.0</code> suffix (<code>1.0</code>, <code>25.0</code>) → <strong>Treatment:</strong> cast to integer after validation</li>
+</ul>
+<p><strong>Foreign data in domestic fields:</strong></p>
+<ul>
+<li><code>codePostal</code>: one UK postcode (<code>EC1R4QB</code>) and two likely Belgian codes with leading spaces → <strong>Flag:</strong> legitimate foreign registrations, but may need special handling</li>
+<li><code>pays</code>: one <code>ROYAUME-UNI</code> (United Kingdom) record → <strong>Accept:</strong> legitimate</li>
+</ul>
+<p><strong>French address conventions:</strong></p>
+<ul>
+<li>CEDEX postal routing suffixes in multiple forms (<code>NANTERRE CEDEX</code>, <code>PARIS CEDEX 07</code>, <code>LE MANS Cedex 2</code>)</li>
+<li><code>S/</code> abbreviation for "sur" (<code>VILLEBON S/ YVETTE</code>)</li>
+<li>Hyphenated vs unhyphenated town names (<code>Neuilly-sur-Seine</code> vs <code>Neuilly sur Seine</code>)</li>
+<li>Arrondissement suffixes (<code>PARIS 16</code>, <code>LYON 3EME</code>)</li>
+</ul>
+<p><strong>High null rates:</strong></p>
+<ul>
+<li><code>emailDeContact</code>: 58.3% empty</li>
+<li><code>adresse</code>: 24.4% empty</li>
+</ul>
+<p><strong>Structural consistency (no issues):</strong></p>
+<ul>
+<li><code>dateDebut</code>: near-perfect DD-MM-YYYY consistency (1,953 of 1,954 values)</li>
+<li><code>identifiantNational</code>: clean separation of SIREN (numeric) and RNA (alphanumeric) identifiers</li>
+<li><code>categorieOrganisation.label</code>: consistent controlled vocabulary</li>
+</ul>
+<h2 id="lessons-learned"><a class="header" href="#lessons-learned">Lessons Learned</a></h2>
+<p><strong>1. Text-encoded numeric ranges are invisible to schemas but obvious to masks.</strong> The expenditure and revenue fields store French-language band descriptions — <code>&gt;= 75 000 euros et &lt; 100 000 euros</code> — that look like strings to any schema validator and pass every null or length check. But the mask <code>_ _ 9 9 a a _ 9 9 a</code> immediately reveals the presence of alphabetic characters mixed with digits, signalling that this is not a straightforward numeric field. Any team ingesting this data and attempting arithmetic on these columns would discover the problem only at query time, possibly after building dashboards on meaningless aggregations. The profiler surfaces it in the first pass.</p>
+<p><strong>2. One character substitution, caught by structural profiling.</strong> <code>Ro!and</code> — a single exclamation mark where an <code>l</code> should be — produces the mask <code>Aa_a</code>, which is structurally different from every other first name in the dataset (all of which match <code>Aa</code>, <code>Aa-Aa</code>, or <code>Aa Aa</code>). No schema, no length check, no regex for "valid name characters" would catch this unless you explicitly excluded exclamation marks from names — and who thinks to do that? The mask catches it because the structural signature of the error is different from the structural signature of correct data. This is the essence of mask-based profiling: you do not need to know what errors to look for. You look at the structure, and the errors announce themselves.</p>
+<p><strong>3. Casing inconsistency is pervasive in French administrative data.</strong> The dataset contains uppercase (<code>FRANCE</code>, <code>BEAUNE</code>, <code>PRESIDENT</code>), title case (<code>France</code>, <code>Paris</code>, <code>Directeur Général</code>), French grammatical case (<code>Directeur général</code>, where only the first word is capitalised), and lowercase (<code>france</code>, <code>avignon</code>, <code>président</code>). These are not random — they reflect different data entry conventions, different source systems, and different interpretations of French typographic rules. The profiler separates them all because each casing pattern produces a different mask, turning an invisible consistency problem into a visible, countable one.</p>
+<p><strong>4. Float serialisation of integers is a silent data type issue.</strong> The <code>nombreSalaries</code> field contains values like <code>1.0</code> and <code>25.0</code> — integers that were serialised as floating-point numbers somewhere in the data pipeline. The JSON format does not distinguish between integer and float types in a way that survives most serialisation round-trips, so this kind of silent type promotion is common. The mask <code>9.9</code> (with a decimal point) is different from <code>9</code> (without), and that difference is the signal. Left undetected, these values might cause type errors in strongly-typed systems or produce unexpected results in aggregation queries that treat <code>1.0</code> as a float rather than an integer.</p>
+<p><strong>5. A UK postcode in a French dataset is not an error — it is a fact.</strong> <code>EC1R4QB</code> in the <code>codePostal</code> field is a legitimate British postal code belonging to a UK organisation registered in the French lobbyist registry. The mask <code>A9A9A</code> is unmistakable against a background of five-digit numeric French codes. The profiler does not tell you whether this is right or wrong — it tells you that it is structurally different, and gives you the example so you can decide. In this case the decision is clear: the data is correct, and the system needs to accommodate foreign postal code formats.</p>
+<p><strong>6. French address conventions create legitimate structural diversity.</strong> CEDEX postal routing suffixes, the <code>S/</code> abbreviation for "sur", hyphenated commune names, arrondissement numbers, and space-separated thousands in currency amounts are all standard French conventions. They are not errors, but they create structural variation that any downstream consumer needs to understand. The mask frequency table is an inventory of these conventions — a specification extracted from the data itself, rather than imposed by a schema that someone wrote based on what they thought the data looked like.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="worked-example-jma-earthquake.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="worked-example-pubmed-xml.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="worked-example-jma-earthquake.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="worked-example-pubmed-xml.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

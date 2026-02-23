@@ -1,0 +1,11 @@
+/* CC BY 4.0 license footer on every page */
+.page-wrapper .page .content::after {
+    content: "© 2026 Andrew Morgan · Licensed under CC BY 4.0 — Creative Commons Attribution 4.0 International";
+    display: block;
+    text-align: center;
+    font-size: 0.75em;
+    color: #999;
+    border-top: 1px solid #eee;
+    padding-top: 1.5em;
+    margin-top: 3em;
+}

@@ -1,0 +1,496 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Worked Example: Profiling JMA Earthquake Data - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/worked-example-jma-earthquake.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="worked-example-profiling-japan-meteorological-agency-earthquake-data" class="unnumbered"><a class="header" href="#worked-example-profiling-japan-meteorological-agency-earthquake-data">Worked Example: Profiling Japan Meteorological Agency Earthquake Data</a></h1>
+<p>This appendix is a second worked example, and it is deliberately different from the Companies House analysis that precedes it. Where that dataset was flat, tabular, and English, this one is deeply nested JSON, bilingual (Japanese and English), and sourced from a government agency on the other side of the world. The point is simple: mask-based profiling works on any data, in any language, from any structure, once you flatten it. The techniques described in this book are not limited to pipe-delimited CSV files from the UK — they apply universally, and this example proves it.</p>
+<h2 id="the-dataset"><a class="header" href="#the-dataset">The Dataset</a></h2>
+<p>The Japan Meteorological Agency (JMA) publishes open earthquake data through a public API. An index of recent seismic events is available at <a href="https://www.jma.go.jp/bosai/quake/data/list.json">https://www.jma.go.jp/bosai/quake/data/list.json</a>, and each event links to a detailed JSON document containing the earthquake's hypocenter location, magnitude, maximum intensity, and — crucially — a full breakdown of seismic intensity observations at every reporting station across the affected region.</p>
+<p>The dataset used here comprises 80 earthquake events containing 2,433 individual seismic station observations. The data is freely available, requires no authentication, and is published in both Japanese (the <code>Name</code> field at every level) and English (the <code>enName</code> field). It is exactly the kind of rich, nested, non-English dataset that traditional profiling tools struggle with.</p>
+<h2 id="flattening-nested-json-for-profiling"><a class="header" href="#flattening-nested-json-for-profiling">Flattening Nested JSON for Profiling</a></h2>
+<p>The raw JSON has six or more levels of nesting. A single earthquake event contains a <code>Body.Intensity.Observation</code> object, which contains an array of <code>Pref</code> (prefecture) objects, each of which contains an array of <code>Area</code> objects, each of which contains an array of <code>City</code> objects, each of which contains an array of <code>IntensityStation</code> objects with fields like <code>Name</code>, <code>enName</code>, <code>Int</code> (intensity), <code>Lat</code>, <code>Lon</code>, and <code>Prm</code> (whether the station is official). The path from the root to a station's latitude looks like this:</p>
+<pre><code>Body.Intensity.Observation.Pref[0].Area[0].City[0].IntensityStation[0].Lat
+</code></pre>
+<p>To profile this with bytefreq, we need to flatten it — to turn every leaf value in the nested structure into a key-value pair where the key is the full dot-path and the value is the leaf content. This is the flat enhanced format described in Chapter 9, and it handles nested data naturally because each record is simply a bag of key-value pairs rather than a fixed set of columns.</p>
+<p>The flattening produces a striking result: 80 earthquake records generate 6,551 unique flattened key paths. This happens because different earthquakes affect different numbers of prefectures, areas, cities, and stations. One earthquake might trigger observations at 3 stations in 1 prefecture; another might light up 200 stations across 8 prefectures. When we preserve array indices in the key paths (e.g. <code>Pref[0].Area[0].City[0]</code> vs <code>Pref[0].Area[0].City[1]</code>), each unique combination of indices produces a unique key. This is the "ragged row" problem — and the flat enhanced format handles it without any special treatment, because there is no requirement that every record have the same set of keys.</p>
+<p>When we collapse array indices (treating all <code>Pref[]</code> entries as equivalent, all <code>Area[]</code> entries as equivalent, and so on), the 6,551 unique paths reduce to 81 unique field paths. But these 81 fields have varying numbers of values: <code>Body.Earthquake.Hypocenter.Area.Name</code> has 80 values (one per earthquake), <code>Body.Intensity.Observation.Pref.Name</code> has 157 values (some earthquakes affect multiple prefectures), <code>Body.Intensity.Observation.Pref.Area.City.Name</code> has 1,546 values, and <code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name</code> has 2,433 values at the deepest level. The deeper you go in the hierarchy, the more values you get — a one-to-many fan-out at every level of nesting.</p>
+<h2 id="structure-discovery-field-population-analysis"><a class="header" href="#structure-discovery-field-population-analysis">Structure Discovery: Field Population Analysis</a></h2>
+<p>Before examining individual field values, we profile the field paths themselves. For each dot-notation path (with array indices collapsed), we count how many of the 80 earthquake records contain that path and express it as a percentage. This is the structural discovery step — it tells us the shape of the data before we look at what is in it.</p>
+<pre><code>Field Path                                                            Count  % Populated
+-----------------------------------------------------------------------------------------
+Control.DateTime                                                         80     100.0%
+Control.EditorialOffice                                                  80     100.0%
+Control.PublishingOffice                                                 80     100.0%
+Control.Status                                                           80     100.0%
+Control.Title                                                            80     100.0%
+Head.EventID                                                             80     100.0%
+Head.InfoKind                                                            80     100.0%
+Head.InfoKindVersion                                                     80     100.0%
+Head.InfoType                                                            80     100.0%
+Head.ReportDateTime                                                      80     100.0%
+Head.Serial                                                              80     100.0%
+Head.TargetDateTime                                                      80     100.0%
+Head.Title                                                               80     100.0%
+Head.enTitle                                                             80     100.0%
+Head.Headline.Text                                                       80     100.0%
+Head.Headline.Information.Item.Kind.Name                                  8      10.0%
+Head.Headline.Information.Item.Areas.Area.Code                            8      10.0%
+Head.Headline.Information.Item.Areas.Area.Name                            8      10.0%
+Body.Earthquake.ArrivalTime                                              80     100.0%
+Body.Earthquake.Magnitude                                                80     100.0%
+Body.Earthquake.OriginTime                                               80     100.0%
+Body.Earthquake.Hypocenter.Area.Code                                     80     100.0%
+Body.Earthquake.Hypocenter.Area.Coordinate                               80     100.0%
+Body.Earthquake.Hypocenter.Area.Name                                     80     100.0%
+Body.Earthquake.Hypocenter.Area.enName                                   80     100.0%
+Body.Comments.ForecastComment.Code                                       80     100.0%
+Body.Comments.ForecastComment.Text                                       80     100.0%
+Body.Comments.ForecastComment.enText                                     80     100.0%
+Body.Comments.VarComment.Code                                            75      93.8%
+Body.Comments.VarComment.Text                                            75      93.8%
+Body.Comments.VarComment.enText                                          75      93.8%
+Body.Intensity.Observation.MaxInt                                        80     100.0%
+Body.Intensity.Observation.Pref.Code                                     80     100.0%
+Body.Intensity.Observation.Pref.MaxInt                                   80     100.0%
+Body.Intensity.Observation.Pref.Name                                     80     100.0%
+Body.Intensity.Observation.Pref.enName                                   80     100.0%
+Body.Intensity.Observation.Pref.Area.Code                                80     100.0%
+Body.Intensity.Observation.Pref.Area.MaxInt                              80     100.0%
+Body.Intensity.Observation.Pref.Area.Name                                80     100.0%
+Body.Intensity.Observation.Pref.Area.enName                              80     100.0%
+Body.Intensity.Observation.Pref.Area.Revise                               1       1.2%
+Body.Intensity.Observation.Pref.Area.City.Code                           80     100.0%
+Body.Intensity.Observation.Pref.Area.City.MaxInt                         80     100.0%
+Body.Intensity.Observation.Pref.Area.City.Name                           80     100.0%
+Body.Intensity.Observation.Pref.Area.City.enName                         80     100.0%
+Body.Intensity.Observation.Pref.Area.City.Revise                          1       1.2%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Code          80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Int           80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name          80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.enName        80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.Revise         1       1.2%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lat    80     100.0%
+Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lon    80     100.0%
+</code></pre>
+<p>The core earthquake structure — Control, Head, Body.Earthquake, Body.Intensity — is 100% populated across all 80 records. This is the spine of the data, the set of fields that every earthquake report shares regardless of magnitude or location. When we see 100% population at this scale, it tells us the schema is well-enforced for the core reporting obligation, which is exactly what we would expect from a national meteorological agency publishing structured seismic data.</p>
+<p><code>Body.Comments.VarComment.*</code> drops to 93.8% — five earthquakes had no variable commentary. This is not a data quality issue; some events are too minor or too routine to warrant additional commentary. But the profiler flags it, and that is the point: the absence of a field in nested data is itself information. In a flat schema, these five records would have null values in the VarComment columns. In nested JSON, the key simply does not exist. The field population analysis treats both representations the same way, which is one of the advantages of profiling the flattened form.</p>
+<p><code>Head.Headline.Information.*</code> appears in only 10% of records (8 earthquakes). This block contains detailed area-level intensity information in the headline — it is only populated for significant earthquakes where multiple areas experienced notable shaking. The other 90% of records have a simple text headline without the structured breakdown. This is a common pattern in operational data: optional sub-structures that are conditionally populated based on the severity or complexity of the event. The population percentage tells you immediately how common or rare the condition is.</p>
+<p>The <code>Revise</code> field appears at three levels (Area, City, IntensityStation) but only in 1.2% of records — exactly one earthquake. This is a revision flag indicating that intensity observations were updated after initial publication. It is a rare operational flag that you would never discover by reading the API documentation, but the field population analysis surfaces it immediately. In a flat schema, this field would be a column that is 98.8% null. In nested JSON, it simply does not appear in most records. The profiler treats both the same way.</p>
+<h2 id="field-by-field-analysis"><a class="header" href="#field-by-field-analysis">Field-by-Field Analysis</a></h2>
+<p>The profile was generated using bytefreq in LU (Low-grain Unicode) mode, the same starting grain used for the Companies House example.</p>
+<h3 id="hypocenter-name-japanese"><a class="header" href="#hypocenter-name-japanese">Hypocenter Name (Japanese)</a></h3>
+<p><code>Body.Earthquake.Hypocenter.Area.Name</code></p>
+<pre><code>Mask    Count   Example
+a          78   福島県会津
+a_a         1   (compound name with punctuation separator)
+</code></pre>
+<p>Every Japanese place name — regardless of length, kanji composition, or regional variation — collapses to a single <code>a</code> mask. This is a direct consequence of the LU character class rules: all CJK ideographs (kanji), hiragana, and katakana characters are classified as alphabetic, and the low-grain mode collapses consecutive characters of the same class. A four-character name like <code>福島県沖</code> and an eight-character name like <code>茨城県南部</code> both produce <code>a</code>.</p>
+<p>This is correct behaviour. At low grain, we are asking "what is the structural shape of this field?" and the answer is: it is consistently alphabetic text with one exception that contains punctuation. The single <code>a_a</code> record has some kind of separator character (a middle dot or similar punctuation) within the name, making it structurally different from the other 78 records. That is worth investigating — but the overwhelming consistency of the field is the main finding.</p>
+<p>For CJK text, if you need to distinguish between names of different lengths, you would switch to HU (High-grain Unicode) mode, which preserves character counts. But for discovery profiling, the LU result tells us exactly what we need to know: this field is structurally uniform.</p>
+<h3 id="hypocenter-name-english"><a class="header" href="#hypocenter-name-english">Hypocenter Name (English)</a></h3>
+<p><code>Body.Earthquake.Hypocenter.Area.enName</code></p>
+<pre><code>Mask                                Count   Example
+Aa Aa Aa                               18   Southern Ibaraki Prefecture
+Aa a a Aa a Aa Aa                      12   Off the east Coast of Aomori Prefecture
+Aa a Aa a Aa Aa                        10   Off the Coast of Ibaraki Prefecture
+Aa Aa a Aa Aa                           8   Northern Inland Bay of Suruga
+Aa Aa Aa, Aa                            7   Northern Nemuro District, Hokkaido
+Aa, Aa Aa                               5   Chuetsu, Niigata Prefecture
+Aa a a Aa a Aa                          4   Off the east Coast of Chiba
+Aa Aa                                   3   Hyuganada Sea
+Aa a Aa a Aa                            3   Off the Coast of Miyagi
+Aa Aa a Aa-Aa Aa                        2   Adjacent Sea of Yonagunijima Island
+Aa Aa a Aa Aa Aa                        2   Adjacent Sea of Tanegashima Island
+Aa a a Aa a Aa-Aa Aa                    2   Off the northeast Coast of Miyako-jima Island
+Aa a a Aa Aa, Aa                        1   Central and Southern Aichi Prefecture
+Aa Aa _ Aa Aa Aa, Aa Aa                 1   Eastern Region · Off the Coast of Hokkaido
+Aa Aa, Aa Aa                            1   Northern Tsugaru, Aomori Prefecture
+</code></pre>
+<p>The English names are far more structurally diverse than the Japanese names — 15 distinct masks for 80 values. This is because English uses spaces between words (each space creates a boundary in the mask) and distinguishes between uppercase and lowercase (the <code>Aa</code> vs <code>a</code> distinction captures title case vs lowercase words like "the", "of", "and").</p>
+<p>The masks reveal a naming convention: locations use title case for significant words (<code>Southern</code>, <code>Ibaraki</code>, <code>Prefecture</code>) and lowercase for articles and prepositions (<code>the</code>, <code>of</code>, <code>a</code>). This is consistent across the dataset and explains why <code>Aa a a Aa a Aa Aa</code> (12 records, "Off the east Coast of Aomori Prefecture") and <code>Aa a Aa a Aa Aa</code> (10 records, "Off the Coast of Ibaraki Prefecture") are separate masks — the former has one extra lowercase word.</p>
+<p>The <code>Aa Aa _ Aa Aa Aa, Aa Aa</code> mask (1 record) is interesting: the <code>_</code> in the mask indicates a punctuation character that is neither a letter, digit, nor space. The example value is <code>Eastern Region · Off the Coast of Hokkaido</code> — a middle dot (·) used as a separator. This is the only record that uses this compound naming format, making it a structural outlier.</p>
+<p>The hyphens in masks like <code>Aa-Aa Aa</code> (e.g. <code>Yonagunijima Island</code>) reflect the romanisation conventions for Japanese place names, where compound words are sometimes hyphenated (<code>Miyako-jima</code>). The profiler treats hyphens as punctuation, which correctly separates them from the alphabetic text.</p>
+<h3 id="coordinate"><a class="header" href="#coordinate">Coordinate</a></h3>
+<p><code>Body.Earthquake.Hypocenter.Area.Coordinate</code></p>
+<pre><code>Mask            Count   Example
+_9.9_9.9-9_        72   +36.6+140.6-10000/
+_9.9_9.9_9_         7   +45.0+142.2+0/
+</code></pre>
+<p>Two structural variants in a field of 80 values, and the masks make the difference immediately visible. The dominant format <code>_9.9_9.9-9_</code> (72 records) encodes latitude, longitude, and depth as <code>+lat+lon-depth/</code>, where the depth is negative (below sea level, as expected for earthquake hypocenters). The second format <code>_9.9_9.9_9_</code> (7 records) has a positive or zero third component — <code>+45.0+142.2+0/</code> — meaning the depth is zero or the value represents an elevation rather than a depth.</p>
+<p>This is a JMA-specific coordinate encoding. A schema would describe this field as a string. A regex validator might check for numeric content. But the mask profiler instantly reveals that there are two structural variants, and the difference is the sign character before the third numeric component: <code>-</code> in 72 records, <code>+</code> in 7 records. An analyst seeing this for the first time would immediately ask: why do 7 earthquakes have a positive depth value? Are these shallow surface events? Is zero depth a default? The mask does not answer these questions, but it makes sure they get asked.</p>
+<h3 id="magnitude"><a class="header" href="#magnitude">Magnitude</a></h3>
+<p><code>Body.Earthquake.Magnitude</code></p>
+<pre><code>Mask    Count   Example
+9.9        80   3.6
+</code></pre>
+<p>Perfectly consistent. Every magnitude is a decimal number, collapsed to <code>9.9</code> by the low-grain mask. No exceptions, no missing values, no structural anomalies. This is what a well-controlled numeric field looks like under profiling.</p>
+<h3 id="maximum-intensity"><a class="header" href="#maximum-intensity">Maximum Intensity</a></h3>
+<p><code>Body.Intensity.Observation.MaxInt</code></p>
+<pre><code>Mask    Count   Example
+9          80   1
+</code></pre>
+<p>Single digit, perfectly consistent across all 80 records. The JMA seismic intensity scale runs from 0 to 7 (with sub-levels like 5-lower and 5-upper, though those would have different masks if present). In this dataset, all maximum intensities are single-digit values.</p>
+<h3 id="prefecture-name-japanese"><a class="header" href="#prefecture-name-japanese">Prefecture Name (Japanese)</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Name</code></p>
+<pre><code>Mask    Count   Example
+a         157   沖縄県
+</code></pre>
+<p>All 157 prefecture name values collapse to <code>a</code> — the same pattern we saw with the hypocenter names. Japanese prefecture names are composed entirely of kanji characters, and the LU mask treats them all identically. The count of 157 (versus 80 earthquakes) tells us that earthquakes routinely affect multiple prefectures — on average, about two prefectures per event, though the distribution is certainly skewed.</p>
+<h3 id="city-name-japanese"><a class="header" href="#city-name-japanese">City Name (Japanese)</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Area.City.Name</code></p>
+<pre><code>Mask    Count   Example
+a       1,545   錦江町
+</code></pre>
+<p>Again, near-total uniformity: 1,545 of 1,546 city names collapse to <code>a</code>. The one exception (not shown in this summary) likely contains a non-kanji character — a numeral, a Latin letter, or an unusual punctuation mark in the city name. At this level of consistency, a single exception in 1,546 values is exactly the kind of outlier the profiler is designed to surface.</p>
+<h3 id="station-name-japanese"><a class="header" href="#station-name-japanese">Station Name (Japanese)</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.Name</code></p>
+<pre><code>Mask    Count   Example
+a_      2,002   (station name with ＊ suffix)
+a         413   (plain station name)
+a9a_       12   (station name with digits and ＊ suffix)
+a9a         6   (station name with digits, no ＊ suffix)
+</code></pre>
+<p>This is where the profiling gets genuinely interesting. The <code>a_</code> mask (2,002 of 2,433 values, 82.3%) indicates station names that end with a punctuation character. That character is ＊ — a full-width asterisk — and it is not decoration. In JMA data, the ＊ suffix marks stations that are not part of the official seismic network; they are supplementary observation points operated by local governments or other agencies. The <code>a</code> mask (413 values, 17.0%) represents official stations without the suffix.</p>
+<p>The mask has discovered a structural encoding convention that carries semantic meaning. A schema would describe this field as a string. A data dictionary might (or might not) mention the ＊ convention. But the profiler finds it automatically, because the full-width asterisk is a punctuation character and the mask faithfully records its presence.</p>
+<p>The <code>a9a_</code> and <code>a9a</code> masks (12 and 6 values respectively) indicate station names that contain digits — likely stations identified by number within a municipality, such as "第２観測点" (Observation Point 2). The digit creates a break in the alphabetic run, producing a three-segment mask instead of a single <code>a</code>.</p>
+<h3 id="station-name-english"><a class="header" href="#station-name-english">Station Name (English)</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.enName</code></p>
+<pre><code>Mask                    Count   Example
+Aa-a Aa_                1,225   Omitama-shi Koshin*
+Aa Aa-a Aa_               331   Kawasaki Miyamae-ku Miyamae*
+Aa-a Aa                    272   Yoron-cho Mugiya
+Aa-a Aa-a_                 213   Hitachinaka-shi Ajigaura*
+Aa Aa-a Aa-a_               93   Saitama Chuo-ku Sakuragi*
+Aa-a-a Aa_                  74   Shin-hidaka-cho Mitsuishi*
+Aa-a Aa-a                   54   Mishima-shi Shimokiyomizu
+Aa Aa-a Aa                  43   Saitama Urawa-ku Tokiwa
+Aa Aa_                      24   Neba Murayakuba*
+Aa-a Aa-a Aa_               19   Tochigi-shi Nishikata-cho*
+Aa-a-a Aa-a                 13   Shin-hidaka-cho Shizunai
+Aa-a-a Aa-a_                13   Shin-hidaka-cho Shizunai*
+Aa Aa-a Aa-a                11   Kawasaki Tama-ku Ishida
+Aa-a-a                       7   (compound hyphenated name)
+Aa-a Aa-a-a_                 7   Nikko-shi Arasawa-cho*
+Aa-a-a Aa Aa_                4   Mo-oka-shi Shimokawaji*
+Aa-a Aa Aa                   3   Mutsu-shi Wakinosawa Muraichi
+Aa-a a-Aa_                   3   Kamagaya-shi c-Kamagaya*
+Aa-a a_                      3   Kazo-shi c-Kazo*
+Aa-a AaAa_                   2   Sammu-shi c-Sanbu*
+</code></pre>
+<p>The English station names produce 20 or more distinct masks for 2,433 values, and the mask distribution tells a rich story about Japanese geographic naming conventions in romanised form.</p>
+<p>The dominant pattern <code>Aa-a Aa_</code> (1,225 values, 50.3%) represents the standard format: a municipality name with a hyphenated suffix (<code>-shi</code>, <code>-cho</code>, <code>-machi</code>, <code>-mura</code> indicating city, town, or village), followed by a district or station name, followed by the <code>*</code> marker for unofficial stations. The hyphen is structural — it separates the municipality type suffix from the name, and the mask faithfully captures it.</p>
+<p>The <code>Aa Aa-a Aa_</code> pattern (331 values) adds an extra component: a prefecture or city name before the hyphenated municipality, as in <code>Kawasaki Miyamae-ku Miyamae*</code> where <code>Kawasaki</code> is the city and <code>Miyamae-ku</code> is the ward.</p>
+<p>Two masks deserve special attention. The <code>Aa-a a-Aa_</code> pattern (3 values, e.g. <code>Kamagaya-shi c-Kamagaya*</code>) contains a lowercase single letter <code>a</code> followed by a hyphen and a capitalised name. The <code>c-Kamagaya</code> component suggests a coded prefix — perhaps a sub-station identifier. Similarly, <code>Aa-a AaAa_</code> (2 values, e.g. <code>Sammu-shi c-Sanbu*</code>) shows a run of mixed case with no space between components. These are minor inconsistencies in the romanisation scheme, and the profiler surfaces them without any prior knowledge of Japanese naming conventions.</p>
+<p>The <code>_</code> at the end of many masks corresponds to the asterisk (<code>*</code>) in the English names — the same unofficial station marker we saw as ＊ in the Japanese names, but here rendered as a standard ASCII asterisk rather than the full-width variant. The bilingual data reveals an encoding inconsistency: Japanese names use ＊ (U+FF0A, full-width asterisk) while English names use * (U+002A, standard asterisk). Both carry the same meaning, but they are different characters.</p>
+<h3 id="station-intensity"><a class="header" href="#station-intensity">Station Intensity</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.Int</code></p>
+<pre><code>Mask    Count   Example
+9       2,433   1
+</code></pre>
+<p>Perfectly consistent across all 2,433 station observations. Every intensity value is a single digit.</p>
+<h3 id="station-latitude"><a class="header" href="#station-latitude">Station Latitude</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lat</code></p>
+<pre><code>Mask    Count   Example
+9.9     2,433   36.26
+</code></pre>
+<p>Every latitude value is a decimal number, collapsed to <code>9.9</code> by the low-grain mask. No missing values, no formatting inconsistencies, no structural anomalies across 2,433 observations.</p>
+<h3 id="station-longitude"><a class="header" href="#station-longitude">Station Longitude</a></h3>
+<p><code>Body.Intensity.Observation.Pref.Area.City.IntensityStation.latlon.lon</code></p>
+<pre><code>Mask    Count   Example
+9.9     2,433   139.58
+</code></pre>
+<p>Same as latitude — perfectly consistent decimal numbers across all 2,433 values.</p>
+<h3 id="headline-text-japanese"><a class="header" href="#headline-text-japanese">Headline Text (Japanese)</a></h3>
+<p><code>Head.Headline.Text</code></p>
+<pre><code>Mask        Count   Example
+9a9a9a_a_      80   ２１日１３時０３分ころ、地震がありました。
+</code></pre>
+<p>A single mask covers all 80 values, and it is one of the most revealing results in the entire profile. The mask <code>9a9a9a_a_</code> tells us that the headline text alternates between digits and alphabetic characters, with punctuation at certain positions. The example makes it clear: <code>２１日１３時０３分ころ、地震がありました。</code> translates roughly to "An earthquake occurred at approximately 13:03 on the 21st."</p>
+<p>The digits in the mask are Japanese full-width numerals — <code>２１</code> rather than <code>21</code>, <code>１３</code> rather than <code>13</code>. These are Unicode characters in the Fullwidth Forms block (U+FF10 through U+FF19), and they are classified as digits by the Unicode standard. The bytefreq profiler, because it uses Unicode character class rules, correctly identifies them as digits and masks them as <code>9</code>. This is a validation of the Unicode-aware approach: a byte-level profiler working with ASCII assumptions would either fail on this text entirely or misclassify the full-width digits as alphabetic or unknown characters.</p>
+<p>The alphabetic runs in the mask correspond to kanji and hiragana: <code>日</code> (day), <code>時</code> (hour), <code>分</code> (minute), <code>ころ</code> (approximately), <code>地震がありました</code> (an earthquake occurred). The punctuation marks <code>、</code> (Japanese comma) and <code>。</code> (Japanese full stop) produce the <code>_</code> segments.</p>
+<p>The remarkable thing is the total consistency: all 80 headlines follow the same structural template. This is clearly a machine-generated string — a template like "{day}日{hour}時{minute}分ころ、地震がありました。" filled in with the event's date and time. The profiler confirms what we might suspect: this field is auto-generated, not human-authored, and its structure is completely predictable.</p>
+<h2 id="character-profiling-the-full-width-digit-discovery"><a class="header" href="#character-profiling-the-full-width-digit-discovery">Character Profiling: The Full-Width Digit Discovery</a></h2>
+<p>The bytefreq profiler has a Character Profiling mode (<code>-r CP</code>) that goes beyond structural masks to count every distinct Unicode code point in the data. Where masking tells you the shape of a field, character profiling tells you the exact inventory of characters that compose it. We ran the headline text field through character profiling and the results are remarkable.</p>
+<pre><code>Hex       Char   Count   Unicode Name
+------    ----   -----   ----------------------------------
+U+3001    、       80    IDEOGRAPHIC COMMA
+U+3002    。       80    IDEOGRAPHIC FULL STOP
+U+3042    あ       80    HIRAGANA LETTER A
+U+304C    が       80    HIRAGANA LETTER GA
+U+3053    こ       80    HIRAGANA LETTER KO
+U+3057    し       80    HIRAGANA LETTER SI
+U+305F    た       80    HIRAGANA LETTER TA
+U+307E    ま       80    HIRAGANA LETTER MA
+U+308A    り       80    HIRAGANA LETTER RI
+U+308D    ろ       80    HIRAGANA LETTER RO
+U+5206    分       80    CJK UNIFIED IDEOGRAPH (minute)
+U+5730    地       80    CJK UNIFIED IDEOGRAPH (ground)
+U+65E5    日       80    CJK UNIFIED IDEOGRAPH (day)
+U+6642    時       80    CJK UNIFIED IDEOGRAPH (hour)
+U+9707    震       80    CJK UNIFIED IDEOGRAPH (quake)
+U+FF10    ０       80    FULLWIDTH DIGIT ZERO
+U+FF11    １      108    FULLWIDTH DIGIT ONE
+U+FF12    ２       48    FULLWIDTH DIGIT TWO
+U+FF13    ３       42    FULLWIDTH DIGIT THREE
+U+FF14    ４       39    FULLWIDTH DIGIT FOUR
+U+FF15    ５       37    FULLWIDTH DIGIT FIVE
+U+FF16    ６       23    FULLWIDTH DIGIT SIX
+U+FF17    ７       20    FULLWIDTH DIGIT SEVEN
+U+FF18    ８       20    FULLWIDTH DIGIT EIGHT
+U+FF19    ９       26    FULLWIDTH DIGIT NINE
+</code></pre>
+<p>The first thing that jumps out is the clean division between fixed and variable characters. The fifteen non-digit characters — the ideographic comma and full stop, the five hiragana characters, and the five kanji — all appear exactly 80 times, once per earthquake record. These are the template characters, the scaffolding of the sentence <code>２１日１３時０３分ころ、地震がありました。</code> ("Around [day] [hour]:[minute], there was an earthquake."). The character profiler has reverse-engineered the template from the data alone, without reading any documentation. Every headline follows the same sentence structure, and the profiler has confirmed it by counting characters rather than by parsing grammar.</p>
+<p>The full-width digits (U+FF10 through U+FF19) tell a different story — they vary in frequency because they encode the variable date and time components. <code>１</code> (FULLWIDTH DIGIT ONE) appears 108 times, which is more than the 80 records, because it occurs in both day numbers and hour numbers. <code>０</code> (FULLWIDTH DIGIT ZERO) appears exactly 80 times, suggesting it appears once per record — likely as padding in minutes or hours like <code>０３</code>. The digit distribution is not uniform; it reflects the actual times when earthquakes occurred during the sample period. <code>７</code> and <code>８</code> appear only 20 times each, while <code>９</code> appears 26 times, because the day-of-month and hour-of-day distributions in the sample period happen to favour certain digits over others.</p>
+<p>The critical discovery, and the one with the most practical consequence, is that these are FULLWIDTH digits (U+FF10 through U+FF19), not ASCII digits (U+0030 through U+0039). Full-width characters occupy the same visual width as CJK ideographs, maintaining consistent column alignment in Japanese text — this is a deliberate formatting choice that is entirely standard in Japanese data systems. But it means that any downstream process expecting ASCII digits will fail silently. A <code>parseInt()</code> call will not parse them. A regex like <code>\d+</code> will not match them in most programming languages. A simple numeric comparison will return false. The character profiler surfaces this encoding choice immediately and unambiguously; a schema that defines the field as "string" would tell you nothing, and even the mask-based profiler, which correctly classified them as digits, did not distinguish between full-width and ASCII variants. This is the level of detail that character profiling provides: not just "there are digits here" but "there are <em>these specific digits</em>, in <em>this specific encoding</em>, and here is why that matters."</p>
+<p>This is the kind of finding that justifies character-level profiling for any dataset containing non-Latin scripts. The mask-based profiler told us there was one structural pattern (<code>9a9a9a_a_</code>), and that finding was genuinely useful — it confirmed that all 80 headlines follow the same template. The character profiler tells us WHY that pattern exists and reveals that what looks like "digits" in the mask output are actually full-width Unicode variants that require specific handling in any extraction or transformation pipeline.</p>
+<p>It is worth noting that the same character profiling technique, applied to the full station name data, separates the three Japanese writing systems cleanly. Hiragana characters (the phonetic syllabary used for grammatical particles and native Japanese words) cluster together, Katakana characters (the phonetic syllabary used for foreign loanwords and, in geographic data, for place name suffixes like ケ in 六ヶ所) appear as a distinct group, and CJK ideographs (kanji) dominate the frequency table. The most frequent kanji are <code>市</code> (city, 1,397 occurrences), <code>町</code> (town, 1,203), and <code>区</code> (ward, 396) — the administrative unit suffixes that appear in every station's municipality name. The character profiler has effectively performed a frequency analysis of Japanese place-name components, revealing the structural vocabulary of the geographic naming system without any external reference data. Where the mask told us "these are all alphabetic strings," the character profile tells us "these alphabetic strings are composed primarily of city, town, and ward designators, written in kanji, with occasional katakana suffixes" — a far richer understanding of the data.</p>
+<h2 id="summary-of-findings"><a class="header" href="#summary-of-findings">Summary of Findings</a></h2>
+<p>Issues and observations discovered through mask-based profiling of 80 JMA earthquake events (2,433 station observations):</p>
+<p><strong>Coordinate encoding:</strong></p>
+<ul>
+<li>Two structural variants: negative depth (72 records) vs positive/zero depth (7 records) → <strong>Investigate:</strong> are zero-depth events genuinely surface-level, or is zero a default value?</li>
+</ul>
+<p><strong>Station names (Japanese):</strong></p>
+<ul>
+<li>＊ (full-width asterisk) suffix on 82.3% of stations marks unofficial observation points → <strong>Document:</strong> this is a semantic encoding convention, not an error</li>
+<li>18 stations contain digits in their names → <strong>Accept:</strong> legitimate naming convention for numbered observation points</li>
+</ul>
+<p><strong>Station names (English):</strong></p>
+<ul>
+<li>Asterisk marker uses ASCII <code>*</code> (U+002A) while Japanese names use ＊ (U+FF0A) → <strong>Flag:</strong> encoding inconsistency between language variants</li>
+<li>Lowercase prefixed components (<code>c-Kamagaya</code>, <code>c-Sanbu</code>) in some station names → <strong>Investigate:</strong> what does the <code>c-</code> prefix signify?</li>
+<li>20+ distinct masks for station names → <strong>Accept:</strong> structural diversity driven by legitimate variation in Japanese geographic naming conventions</li>
+</ul>
+<p><strong>Hypocenter names (English):</strong></p>
+<ul>
+<li>One compound name using middle dot separator (<code>Eastern Region · Off the Coast of Hokkaido</code>) → <strong>Flag:</strong> unique formatting, may cause parsing issues if the middle dot is used as a delimiter elsewhere</li>
+</ul>
+<p><strong>CJK text fields:</strong></p>
+<ul>
+<li>All Japanese text fields collapse to <code>a</code> at low grain → <strong>Expected:</strong> this is correct LU behaviour for CJK text, not a limitation. Use HU grain if length differentiation is needed.</li>
+</ul>
+<p><strong>Headline text:</strong></p>
+<ul>
+<li>Full-width numerals (２１ instead of 21) correctly identified as digits by Unicode-aware masking → <strong>Validated:</strong> the profiler handles mixed-script text correctly</li>
+</ul>
+<p><strong>Structural consistency:</strong></p>
+<ul>
+<li>Magnitude, maximum intensity, station intensity, station latitude, and station longitude are all perfectly consistent — single masks with zero exceptions across their respective populations → <strong>No action required</strong></li>
+</ul>
+<h2 id="lessons-learned"><a class="header" href="#lessons-learned">Lessons Learned</a></h2>
+<p><strong>1. CJK characters and mask granularity.</strong> At LU grain, all Japanese text — whether it is a two-character prefecture suffix or a twelve-character station name — collapses to a single <code>a</code>. This is not a limitation; it is the correct behaviour for a structural discovery tool. The question at low grain is "what kind of data is this?" and the answer for Japanese text is consistently "alphabetic." If you need to distinguish between short and long Japanese strings, switch to HU grain, which preserves character counts. But for finding structural anomalies — the ＊ suffix, the embedded digits, the punctuation separators — LU grain is exactly right, because those characters break the alphabetic run and create visible mask segments.</p>
+<p><strong>2. Nested data works with the same techniques.</strong> Six levels of JSON nesting, arrays within arrays within arrays, one-to-many fan-outs at every level — and the profiler does not care. Once flattened to key-value pairs, every leaf value is just a string to be masked. The flat enhanced format described in Chapter 9 was designed for exactly this kind of data: variable-width records where different rows have different numbers of fields. The 6,551 unique key paths from 80 records would be a nightmare in a traditional columnar profiler that expects a fixed schema. In the flat format, they are just 6,551 key-value pairs, each profiled independently.</p>
+<p><strong>3. Bilingual data reveals encoding conventions.</strong> The same semantic marker — "this is an unofficial station" — is encoded as ＊ (U+FF0A, full-width asterisk) in Japanese text and * (U+002A, standard ASCII asterisk) in English text. The profiler surfaces this automatically because the two characters belong to different Unicode blocks and produce different mask behaviours. A human reviewer looking at the English data alone might never notice the asterisk convention; looking at both languages through the profiler, the convention is unmistakable and the encoding inconsistency is immediately apparent.</p>
+<p><strong>4. Structural conventions that are invisible to schemas are visible to masks.</strong> The ＊ suffix on station names is not described in any JSON schema. It is not a separate field. It is not flagged by a key name or an attribute. It is a character appended to the end of a string value, carrying semantic meaning through convention alone. A schema validator would pass it without comment. A mask profiler flags it instantly — because it changes the structural pattern of the value from <code>a</code> to <code>a_</code>. This is precisely the kind of embedded, undocumented encoding convention that DQOR techniques are designed to detect.</p>
+<p><strong>5. The ragged row problem is real, and the flat enhanced format handles it.</strong> Eighty earthquake records produce 6,551 unique key paths because the array depths vary from record to record. In a traditional tabular format, you would have to either (a) create columns for the maximum possible number of stations, prefectures, areas, and cities — most of which would be empty in most records — or (b) normalise the data into multiple related tables before profiling. The flat enhanced format avoids both of these: each record is a bag of key-value pairs with no requirement for structural uniformity across records. This is not a theoretical advantage; with real nested data, it is the difference between profiling the data as-is and spending days on schema design before profiling can begin.</p>
+<p><strong>6. Wildcard profiling across nested paths.</strong> When the same field name appears at multiple levels of a nested structure — or across multiple datasets — we can profile them collectively using a wildcard pattern. A query like <code>*.Name</code> would gather every <code>Name</code> field regardless of its position in the hierarchy: <code>Body.Earthquake.Hypocenter.Area.Name</code>, <code>Body.Intensity.Observation.Pref.Name</code>, <code>Body.Intensity.Observation.Pref.Area.City.Name</code>, and so on. This allows us to compare the same semantic field across different nesting contexts. In the Companies House example, <code>RegAddress.PostCode</code> is a single column. But if postcodes appeared in multiple nested structures — billing address, shipping address, registered office — we could profile <code>*.PostCode</code> to see all postcodes regardless of context, or drill into individual paths when the aggregate profile reveals anomalies. This wildcard approach works across files, fields, and datasets, making it a powerful tool for cross-cutting analysis.</p>
+<p><strong>7. One profiling technique, any data source.</strong> The Companies House example in the preceding appendix profiles pipe-delimited CSV from a UK government register. This example profiles nested JSON from a Japanese government API. The data could not be more different in structure, language, encoding, or domain. The profiling technique is identical. Flatten, mask, count, sort, interpret. The masks change, the character classes change, the domain knowledge required for interpretation changes — but the method does not. That universality is the core claim of this book, and these two worked examples are the evidence.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="worked-example-companies-house.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="worked-example-hatvp-lobbyists.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="worked-example-companies-house.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="worked-example-hatvp-lobbyists.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

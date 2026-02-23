@@ -1,0 +1,452 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Using bytefreq: Installation, Build, and CLI Reference - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/13-using-bytefreq.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="using-bytefreq-installation-build-and-command-line-reference"><a class="header" href="#using-bytefreq-installation-build-and-command-line-reference">Using bytefreq: Installation, Build, and Command-Line Reference</a></h1>
+<p>This chapter covers the practical side of bytefreq: how to install it, how to build it from source, and how to use it from the command line. If the previous chapters described the <em>what</em> and <em>why</em> of mask-based profiling, this chapter covers the <em>how</em>.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>bytefreq is written in Rust and built using Cargo, Rust's package manager and build system. If you do not already have Rust installed, the standard installation method is:</p>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+</code></pre>
+<p>This installs <code>rustc</code> (the compiler), <code>cargo</code> (the build tool), and <code>rustup</code> (the toolchain manager). Follow the on-screen prompts — the defaults are fine for most systems. After installation, restart your terminal or run <code>source $HOME/.cargo/env</code> to make the tools available.</p>
+<p>Verify the installation:</p>
+<pre><code class="language-bash">rustc --version
+cargo --version
+</code></pre>
+<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<p>There are two ways to install bytefreq.</p>
+<h3 id="from-github-recommended"><a class="header" href="#from-github-recommended">From GitHub (recommended)</a></h3>
+<pre><code class="language-bash">cargo install --git https://github.com/minkymorgan/bytefreq
+</code></pre>
+<p>This clones the repository, compiles the release binary, and installs it to <code>~/.cargo/bin/</code>, which should already be on your PATH if Rust is installed correctly.</p>
+<h3 id="from-a-local-clone"><a class="header" href="#from-a-local-clone">From a local clone</a></h3>
+<pre><code class="language-bash">git clone https://github.com/minkymorgan/bytefreq.git
+cd bytefreq
+cargo build --release
+cargo install --path .
+</code></pre>
+<p>Building from a local clone is useful if you intend to modify the code — for example, to add custom assertion rules as described in the previous chapter.</p>
+<h3 id="verify"><a class="header" href="#verify">Verify</a></h3>
+<pre><code class="language-bash">bytefreq --version
+</code></pre>
+<h2 id="input-formats"><a class="header" href="#input-formats">Input Formats</a></h2>
+<p>bytefreq supports four input formats:</p>
+<p><strong>Tabular</strong> (<code>-f tabular</code>, the default) — delimited text where the first line is a header row and subsequent lines are data records. The delimiter defaults to pipe (<code>|</code>) but can be set to any character using the <code>-d</code> flag. Tabular data is read from standard input (stdin).</p>
+<p><strong>JSON</strong> (<code>-f json</code>) — newline-delimited JSON (NDJSON), where each line is a complete JSON object. bytefreq flattens nested structures using dot-notation paths (e.g., <code>customer.address.postcode</code>), handling arrays and nested objects to a configurable depth. JSON data is read from standard input.</p>
+<p><strong>Excel</strong> (<code>-f excel --excel-path file.xlsx</code>) — native Excel file support for <code>.xlsx</code>, <code>.xls</code>, <code>.xlsb</code>, and <code>.ods</code> formats. Requires building with the <code>excel</code> feature flag (<code>cargo install --git https://github.com/minkymorgan/bytefreq --features excel</code>). By default, bytefreq reads the first sheet; use <code>--excel-sheet</code> to select a specific sheet by index (0-based).</p>
+<p><strong>Parquet</strong> (<code>-f parquet --parquet-path file.parquet</code>) — native Apache Parquet file support. Requires building with the <code>parquet</code> feature flag (<code>cargo install --git https://github.com/minkymorgan/bytefreq --features parquet</code>). Parquet files are converted internally to JSON lines, so all JSON features — dot-notation nested paths, array index handling (<code>-a</code>), path depth limiting (<code>-p</code>), and enhanced output — work with Parquet data. Nested structs produce dot-notation paths (<code>user.address.city</code>), and list columns produce indexed array paths (<code>scores[0]</code>, <code>scores[1]</code>). Timestamps are automatically converted to ISO 8601 strings, and all standard Arrow data types are supported.</p>
+<p>To install with all optional format support:</p>
+<pre><code class="language-bash">cargo install --git https://github.com/minkymorgan/bytefreq --features parquet,excel
+</code></pre>
+<p>A note on CSV: bytefreq defaults to pipe-delimited input rather than comma-delimited, because pipe characters appear far less frequently in real-world data values and thus produce fewer parsing ambiguities. If your data is comma-delimited, pass <code>-d ','</code>. For complex CSV files with quoted fields, escaped delimiters, or embedded newlines, bytefreq uses a proper CSV parser that handles quoted fields and escape sequences correctly.</p>
+<h2 id="command-line-reference"><a class="header" href="#command-line-reference">Command-Line Reference</a></h2>
+<pre><code>bytefreq [OPTIONS]
+
+OPTIONS:
+  -g, --grain &lt;GRAIN&gt;          Masking grain level [default: LU]
+                                 H  - High grain ASCII (A/a/9)
+                                 L  - Low grain ASCII (compressed)
+                                 U  - High grain Unicode (HU)
+                                 LU - Low grain Unicode (compressed)
+
+  -d, --delimiter &lt;DELIM&gt;      Field delimiter [default: |]
+
+  -f, --format &lt;FORMAT&gt;        Input format [default: tabular]
+                                 tabular - Delimited text with header
+                                 json    - Newline-delimited JSON
+                                 excel   - Excel file (requires --excel-path)
+                                 parquet - Parquet file (requires --parquet-path)
+
+      --excel-path &lt;PATH&gt;      Path to Excel file (with -f excel)
+      --excel-sheet &lt;INDEX&gt;    Sheet index, 0-based [default: 0]
+      --parquet-path &lt;PATH&gt;    Path to Parquet file (with -f parquet)
+
+  -r, --report &lt;REPORT&gt;        Report type [default: DQ]
+                                 DQ - Data Quality (mask frequencies)
+                                 CP - Character Profiling (byte/codepoint frequencies)
+
+  -p, --pathdepth &lt;DEPTH&gt;      JSON nesting depth [default: 9]
+
+  -a, --remove-array-numbers   Collapse array indices in JSON paths
+
+  -e, --enhanced-output        Output flat enhanced JSON (nested format)
+
+  -E, --flat-enhanced           Output flat enhanced JSON (flattened format)
+
+  -h, --help                   Print help
+  -V, --version                Print version
+</code></pre>
+<h2 id="basic-profiling"><a class="header" href="#basic-profiling">Basic Profiling</a></h2>
+<p>The most common use case is profiling a delimited file at the default grain level (Low Unicode):</p>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ','
+</code></pre>
+<p>The output is a human-readable frequency report, organised by column. For each column, bytefreq lists the unique masks found, their occurrence counts, and a randomly sampled example value for each mask (selected using reservoir sampling to ensure a truly random representative):</p>
+<pre><code>=== Column: postcode ===
+Mask                Count   Example
+A9 9A               8,412   SW1A 1AA
+A99 9A              1,203   M60 1NW
+A9A 9A                892   W1D 3QU
+AA9 9A                567   EC2R 8AH
+9                     312   N/A
+                       44
+</code></pre>
+<p>The example column is particularly useful during exploratory profiling — it lets you see an actual value behind each mask without having to go back to the raw data.</p>
+<h2 id="grain-levels-in-practice"><a class="header" href="#grain-levels-in-practice">Grain Levels in Practice</a></h2>
+<h3 id="low-unicode-lu--the-default"><a class="header" href="#low-unicode-lu--the-default">Low Unicode (LU) — the default</a></h3>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -g LU
+</code></pre>
+<p>Consecutive characters of the same Unicode class are collapsed. Good for initial discovery: how many structural families exist in each column?</p>
+<h3 id="high-unicode-hu--exact-formats"><a class="header" href="#high-unicode-hu--exact-formats">High Unicode (HU) — exact formats</a></h3>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -g HU
+</code></pre>
+<p>Every character maps individually. Good for precision work: what exact postcode formats are present? What date formats are in use?</p>
+<h3 id="high-ascii-h-and-low-ascii-l--legacy-modes"><a class="header" href="#high-ascii-h-and-low-ascii-l--legacy-modes">High ASCII (H) and Low ASCII (L) — legacy modes</a></h3>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -g H
+cat data.csv | bytefreq -d ',' -g L
+</code></pre>
+<p>The original A/a/9 masks without Unicode awareness. All non-ASCII characters are left unmapped. Useful when profiling data known to be ASCII-only, or when comparing results against the legacy awk-based bytefreq.</p>
+<h2 id="character-profiling"><a class="header" href="#character-profiling">Character Profiling</a></h2>
+<p>The <code>-r CP</code> flag switches from mask-based profiling to character-level frequency analysis:</p>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -r CP
+</code></pre>
+<p>This reports the frequency of every Unicode code point found in the file, alongside the character itself and its Unicode name. The output is sorted by frequency and grouped by Unicode General Category (Letter, Number, Punctuation, Symbol, Separator, Other).</p>
+<p>Character profiling is the forensic tool. Use it when you need to:</p>
+<ul>
+<li><strong>Determine the encoding</strong> of an unknown file — UTF-8, Latin-1, Windows-1252, and mixed encodings each produce characteristic byte patterns.</li>
+<li><strong>Find invisible characters</strong> — zero-width spaces, byte order marks, soft hyphens, and other non-printing characters that cause subtle parsing failures.</li>
+<li><strong>Detect control characters</strong> — tabs, carriage returns, null bytes, and other control characters in fields that should contain only printable text.</li>
+<li><strong>Understand the script composition</strong> — what proportion of the text is Latin, Cyrillic, CJK, Arabic, or other scripts?</li>
+</ul>
+<h2 id="json-profiling"><a class="header" href="#json-profiling">JSON Profiling</a></h2>
+<p>For JSON data, use <code>-f json</code>:</p>
+<pre><code class="language-bash">cat data.ndjson | bytefreq -f json
+</code></pre>
+<p>bytefreq expects newline-delimited JSON — one complete JSON object per line. It flattens nested structures into dot-notation paths:</p>
+<pre><code class="language-json">{"customer": {"address": {"postcode": "SW1A 1AA"}}}
+</code></pre>
+<p>becomes a column named <code>customer.address.postcode</code> with value <code>SW1A 1AA</code>.</p>
+<h3 id="controlling-nesting-depth"><a class="header" href="#controlling-nesting-depth">Controlling nesting depth</a></h3>
+<p>For deeply nested JSON, the <code>-p</code> flag controls how many levels of nesting bytefreq will traverse. Consider this input:</p>
+<pre><code class="language-json">{"org": {"dept": {"team": {"lead": {"name": "Alice"}}}}}
+</code></pre>
+<p>With the default depth (<code>-p 9</code>), this produces a column named <code>org.dept.team.lead.name</code>. Limiting the depth changes what bytefreq sees:</p>
+<pre><code class="language-bash"># Full depth — profiles org.dept.team.lead.name
+cat data.ndjson | bytefreq -f json
+
+# Depth 3 — profiles org.dept.team (stops here, treats remaining nesting as a value)
+cat data.ndjson | bytefreq -f json -p 3
+
+# Depth 1 — profiles org (the entire nested object as a single JSON string)
+cat data.ndjson | bytefreq -f json -p 1
+</code></pre>
+<p>Limiting depth is useful for very complex JSON structures where the full path depth produces an unmanageable number of columns. Start shallow and increase depth as needed.</p>
+<h3 id="collapsing-array-indices"><a class="header" href="#collapsing-array-indices">Collapsing array indices</a></h3>
+<p>JSON arrays produce indexed paths by default. Given this input:</p>
+<pre><code class="language-json">{"items": [{"name": "Widget"}, {"name": "Gadget"}, {"name": "Doohickey"}]}
+</code></pre>
+<p>bytefreq generates separate columns: <code>items.0.name</code>, <code>items.1.name</code>, <code>items.2.name</code>. The <code>-a</code> flag collapses the array index, treating all array elements as the same column:</p>
+<pre><code class="language-bash"># Without -a: items.0.name, items.1.name, items.2.name (3 separate columns)
+cat data.ndjson | bytefreq -f json
+
+# With -a: items.name (1 column, all array elements pooled together)
+cat data.ndjson | bytefreq -f json -a true
+</code></pre>
+<p>This produces <code>items.name</code> instead of separate columns per array position, which is usually what you want for profiling the structural patterns within array elements. The collapsed column's mask frequency table then reflects the patterns across <em>all</em> array elements, not just those at a specific index.</p>
+<h2 id="enhanced-output"><a class="header" href="#enhanced-output">Enhanced Output</a></h2>
+<p>The <code>-e</code> and <code>-E</code> flags switch bytefreq from profiling mode to enhanced output mode. Instead of producing a frequency report, the tool processes every record and outputs the flat enhanced format described in Chapter 9.</p>
+<h3 id="nested-enhanced--e"><a class="header" href="#nested-enhanced--e">Nested enhanced (<code>-e</code>)</a></h3>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -e
+</code></pre>
+<p>Produces one JSON object per input row, with each field expanded into a nested structure:</p>
+<pre><code class="language-json">{
+  "postcode": {
+    "raw": "SW1A 1AA",
+    "HU": "AA9A 9AA",
+    "LU": "A9A 9A",
+    "Rules": {
+      "string_length": 8,
+      "is_uk_postcode": true,
+      "poss_postal_country": ["UK"]
+    }
+  }
+}
+</code></pre>
+<h3 id="flat-enhanced--e"><a class="header" href="#flat-enhanced--e">Flat enhanced (<code>-E</code>)</a></h3>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -E
+</code></pre>
+<p>Produces the same information but flattened to dot-notation keys — one level deep, no nesting:</p>
+<pre><code class="language-json">{
+  "postcode.raw": "SW1A 1AA",
+  "postcode.HU": "AA9A 9AA",
+  "postcode.LU": "A9A 9A",
+  "postcode.Rules.string_length": 8,
+  "postcode.Rules.is_uk_postcode": true,
+  "postcode.Rules.poss_postal_country": ["UK"]
+}
+</code></pre>
+<p>The flat format is easier to load into columnar tools (Pandas, DuckDB, Parquet) because every key maps directly to a column name without requiring nested JSON parsing.</p>
+<h2 id="pipeline-recipes"><a class="header" href="#pipeline-recipes">Pipeline Recipes</a></h2>
+<p>bytefreq is designed for Unix pipelines. Here are some common patterns:</p>
+<h3 id="profile-the-first-10000-rows-of-a-large-file"><a class="header" href="#profile-the-first-10000-rows-of-a-large-file">Profile the first 10,000 rows of a large file</a></h3>
+<pre><code class="language-bash">head -10001 data.csv | bytefreq -d ','
+</code></pre>
+<p>(10,001 to include the header row.)</p>
+<h3 id="profile-compressed-data"><a class="header" href="#profile-compressed-data">Profile compressed data</a></h3>
+<pre><code class="language-bash">zcat data.csv.gz | bytefreq -d ','
+</code></pre>
+<h3 id="profile-a-remote-api-response"><a class="header" href="#profile-a-remote-api-response">Profile a remote API response</a></h3>
+<pre><code class="language-bash">curl -s 'https://api.example.com/data' | bytefreq -f json
+</code></pre>
+<h3 id="generate-flat-enhanced-output-and-load-into-duckdb"><a class="header" href="#generate-flat-enhanced-output-and-load-into-duckdb">Generate flat enhanced output and load into DuckDB</a></h3>
+<pre><code class="language-bash">cat data.csv | bytefreq -d ',' -E &gt; enhanced.ndjson
+duckdb -c "SELECT * FROM read_ndjson_auto('enhanced.ndjson') LIMIT 10;"
+</code></pre>
+<h3 id="profile-only-specific-columns-using-pre-processing"><a class="header" href="#profile-only-specific-columns-using-pre-processing">Profile only specific columns (using pre-processing)</a></h3>
+<pre><code class="language-bash">cat data.csv | cut -d',' -f1,3,5 | bytefreq -d ','
+</code></pre>
+<h3 id="compare-two-files-structurally"><a class="header" href="#compare-two-files-structurally">Compare two files structurally</a></h3>
+<pre><code class="language-bash">diff &lt;(cat file1.csv | bytefreq -d ',') &lt;(cat file2.csv | bytefreq -d ',')
+</code></pre>
+<p>This shows which columns have gained or lost structural patterns between two versions of the same dataset — useful for detecting format drift over time.</p>
+<h3 id="profile-an-excel-file-native"><a class="header" href="#profile-an-excel-file-native">Profile an Excel file (native)</a></h3>
+<pre><code class="language-bash">bytefreq -f excel --excel-path data.xlsx
+</code></pre>
+<p>To profile a specific sheet (0-based index):</p>
+<pre><code class="language-bash">bytefreq -f excel --excel-path data.xlsx --excel-sheet 2
+</code></pre>
+<p>(Requires building with <code>--features excel</code>. Alternatively, DataRadar handles Excel files natively in the browser.)</p>
+<h3 id="profile-a-parquet-file"><a class="header" href="#profile-a-parquet-file">Profile a Parquet file</a></h3>
+<pre><code class="language-bash">bytefreq -f parquet --parquet-path data.parquet
+</code></pre>
+<p>Nested structs produce dot-notation paths and list columns produce indexed array paths, just like JSON. Use <code>-a</code> to collapse array indices:</p>
+<pre><code class="language-bash">bytefreq -f parquet --parquet-path data.parquet -a
+</code></pre>
+<p>Generate flat enhanced output from Parquet:</p>
+<pre><code class="language-bash">bytefreq -f parquet --parquet-path data.parquet -E &gt; enhanced.ndjson
+</code></pre>
+<p>(Requires building with <code>--features parquet</code>.)</p>
+<h2 id="understanding-the-output"><a class="header" href="#understanding-the-output">Understanding the Output</a></h2>
+<p>The standard DQ report output follows a consistent format:</p>
+<pre><code>=== Column: field_name ===
+Mask                Count   Example
+aaaa.aaaa@aaaa.aaa  45,231  john.smith@email.com
+aaaa@aaaa.aaa        8,102  jane@company.org
+Aaaa Aaaaa             312  John Smith
+99999                   45  12345
+                        12
+--------END OF REPORT--------
+</code></pre>
+<p>Each section corresponds to one column in the input. Masks are sorted by descending frequency, so the most common patterns appear first. The example value is a true random sample selected using reservoir sampling — not the first occurrence, but a statistically representative one.</p>
+<p>The <code>--------END OF REPORT--------</code> marker signals the end of the output, which is useful when piping to downstream tools.</p>
+<h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
+<p>bytefreq uses Rayon for multi-threaded processing, so it will utilise all available CPU cores when generating enhanced output. For standard DQ profiling, the bottleneck is typically I/O rather than computation — the mask function is simple enough that CPU time is negligible compared to the time spent reading input.</p>
+<p>On a modern machine, expect throughput of several hundred thousand rows per second for tabular data, depending on the number of columns and the average field length. For most datasets under a few million rows, profiling completes in seconds.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="11-using-dataradar.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="12-assertion-rules-engine.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="11-using-dataradar.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="12-assertion-rules-engine.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Introduction - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/introduction.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="introduction" class="unnumbered"><a class="header" href="#introduction">Introduction</a></h1>
+<p>In 2007, while working on a data migration for a financial services client, we received a file that was described as containing customer addresses. The specification said the fields were fixed-width, ASCII-encoded, with UK postcodes in column 47. When we loaded the file and profiled it, we discovered that column 47 contained a mixture of valid postcodes, phone numbers, the string "N/A" repeated 11,000 times, and — in one memorable case — what appeared to be someone's lunch order.</p>
+<p>The specification was wrong. Or rather, the specification described what the data <em>should</em> look like, and the file contained what the data <em>actually</em> looked like. These are not the same thing, and the gap between them is where data quality lives.</p>
+<p>This experience, repeated in various forms across financial services, telecoms, government, and open data projects over nearly two decades, led to the development of a simple but surprisingly powerful technique: <strong>mask-based data profiling</strong>. The idea is straightforward. Take every character in a data field and translate it to its character class — uppercase letters become <code>A</code>, lowercase become <code>a</code>, digits become <code>9</code>, and everything else (punctuation, spaces, symbols) stays as it is. The result is a structural fingerprint of the value, a <em>mask</em>, that strips away the content and reveals the shape of the data underneath.</p>
+<p>When you profile a column by counting the frequency of each mask, patterns emerge immediately. The dominant masks tell you what the data is supposed to look like. The rare masks — the long tail — tell you where the problems are hiding. No regex, no schema, no assumptions about the data required. Just a mechanical translation that lets the structure speak for itself.</p>
+<p>This book describes that technique, the architecture around it, and the tools that implement it. The technique itself is called <strong>Data Quality on Read</strong> (DQOR), a deliberate parallel to the "Schema on Read" principle that underpins modern data lake architectures. The core idea is the same in both cases: accept raw data as-is, defer processing until the moment of consumption, and never overwrite the original. In the schema case, you defer structural interpretation. In the quality case, you defer profiling, validation, and remediation. The benefits are the same: agility, provenance, and the ability to reprocess history when your understanding improves.</p>
+<p>The tools are <strong>bytefreq</strong>, an open-source command-line profiler now implemented in Rust, and <strong>DataRadar</strong>, a browser-based profiling tool that runs entirely client-side using WebAssembly. Both implement DQOR from the ground up, and both are free to use.</p>
+<p>The book is structured in three parts. Part I sets out the problem: why data quality is hard, and why the traditional approaches — schema validation, statistical profiling, regex-based checks — leave gaps that mask-based profiling can fill. Part II introduces the technique in detail: masks, grain levels, Unicode handling, population analysis, error codes, and treatment functions. Part III describes the architecture that ties it all together: the flat enhanced format (a trick borrowed from Hadoop-era feature stores), and the tools that implement it at different scales.</p>
+<p>The intended audience is anyone who works with data they did not create: data engineers, analysts, scientists, and the growing number of people who find themselves responsible for data quality without having chosen it as a career. The technique is simple enough to prototype in a single line of <code>sed</code>, and powerful enough to run in production at enterprise scale. We will cover the full range.</p>
+<h2 id="discovery-before-exploration"><a class="header" href="#discovery-before-exploration">Discovery Before Exploration</a></h2>
+<p>Before you profile the values in a field, you need to know what fields exist and how populated they are. This sounds obvious. It is obvious. And yet the most common mistake in data quality work is to dive straight into field-level analysis — examining the values in a column — without first understanding the shape of the dataset as a whole. Structure discovery comes before content exploration. Always.</p>
+<p>For tabular data — CSV files, fixed-width extracts, pipe-delimited feeds — this means counting non-null values per column. If a dataset has 55 columns but only 20 of them are more than 50% populated, that fact alone reshapes your entire profiling strategy. You do not need to know <em>what</em> is in the other 35 columns yet. You need to know they are mostly empty. That knowledge takes seconds to acquire and saves hours of misdirected effort.</p>
+<p>For nested data — JSON, XML, hierarchical formats — the same principle applies, but the discovery step is different. You walk the structure to find every field path, then count how many records contain each path. A JSON feed might have 200 distinct field paths, but any given record might populate only 40 of them. A field that appears in 10% of records tells you something important before you have looked at a single value. A field that appears in 100% of records tells you something different. The population profile across all paths is the first thing you need, and the last thing most people think to check.</p>
+<p>Think of it as a census before a survey. The census maps the territory: what exists, where it is, how much of it there is. The survey examines individual items in detail. Running the survey without the census means you do not know what you are missing, what you are over-sampling, or where your effort is best spent. The field population profile is the map. Profile without it and you are navigating blind.</p>
+<p>This principle prevents wasted effort in both directions. Profiling a field that is 99% empty is rarely the best use of your time — you will generate a mask frequency table dominated by a single empty-value pattern and learn almost nothing. Conversely, discovering that a field described as "mandatory" in the specification is only 45% populated is itself a significant data quality finding — and you found it in the discovery phase, before spending any time on content analysis. Some of the most valuable insights come from the map, not from the territory it describes.</p>
+<p>The worked examples in this book follow this principle explicitly. Each begins with a structure discovery phase — field counts, population rates, structural metadata — before moving to field-by-field mask analysis. This is not a stylistic choice. It is the method. Discovery before exploration, every time.</p>
+<h2 id="data-quality-without-borders"><a class="header" href="#data-quality-without-borders">Data Quality Without Borders</a></h2>
+<p>The world's largest generators and consumers of data are in the public sector. Central, regional, and local governments manage millions of data transfers across ministerial boundaries every day. This separation of concerns makes government the single largest environment where Data Quality on Read is most urgently needed.</p>
+<p>The stakes are high. "Single view of citizen" systems help governments deliver better services and ensure people do not fall between the cracks. But building these views requires integrating data from systems that were never designed to talk to each other, encoded in formats nobody fully documented. And because the data is personally identifiable, access to view raw records is rightly restricted — making data quality work uniquely difficult. You need to understand structure and quality without seeing content. This is where mask-based profiling shines: a mask reveals the shape of the data without exposing whose data it is.</p>
+<p>The 33 languages in DataRadar's first tier of localisation — from English and French to Amharic, Hausa, Swahili, Tamil, Nepali, and Chinese — cover approximately 5.5 billion citizens. Data quality tools have historically supported only English interfaces and Latin-script datasets. A civil servant in Addis Ababa profiling census data in Amharic, or a local government analyst in Lagos working with Hausa-language records, had no tools built for them. DataRadar and bytefreq are.</p>
+<p>All citizens deserve effective government services, and data quality is a prerequisite for delivering them. Multilingual, privacy-first, zero-install tools that work across scripts, languages, and borders — that is the ambition.</p>
+<h2 id="from-files-to-services"><a class="header" href="#from-files-to-services">From Files to Services</a></h2>
+<p>The techniques in this book can profile a single file in seconds. But the real prize is bigger than files.</p>
+<p>Consider a government department that receives data from dozens of external collectors — local councils, NHS trusts, schools, partner agencies — and publishes onward to downstream consumers. How does a Chief Data Officer know whether the department is producing good quality data? How does a CTO assure the service, not just individual datasets?</p>
+<p>The answer is to treat data quality profiling as <strong>infrastructure</strong>, not as a one-off activity. The building blocks described in this book — mask-based profiling, the flat enhanced format, population analysis, assertion rules — are designed to assemble into a monitoring architecture that can assure an entire data service.</p>
+<p>The pattern has two sides.</p>
+<p><strong>Exit checks</strong> run at the point of production. Before a department publishes a data feed, the profiling engine runs against the output and generates a quality report — mask distributions, population rates, character encoding composition, assertion rule results. This report is stored as a timestamped fact record. Over weeks and months, a timeseries builds up: a continuous measurement of what the department is actually shipping.</p>
+<p><strong>Entrance checks</strong> run at the point of consumption. When a downstream system receives a data feed, the same profiling engine runs against the input. The entrance report is compared against the expected baseline (derived from the exit checks or from an agreed specification). Deviations are flagged. New masks appearing, population rates dropping, encoding shifts — all are detected automatically, before the data enters the consumer's pipeline.</p>
+<p>Between these two checkpoints, something powerful emerges: <strong>line of sight</strong>. When a downstream system encounters a quality issue, the entrance check report traces it back to the feed. The feed's exit check report traces it back to the collector. The timeseries shows when the problem started. Connected to lineage tools that track data flow across systems, this creates an automated root cause analysis — not "something is wrong somewhere" but "this specific field in this specific feed from this specific collector started producing a new mask pattern on this date, and the downstream impact is quantifiable."</p>
+<p>That quantification matters. When you can say "Department X's data collection issues caused 2,000 downstream failures last quarter, costing an estimated £Y million in rework, delayed decisions, and incorrect outputs," the conversation changes. Quality stops being an abstract concern and becomes a line item. The timeseries is the measuring stick that makes consistent performance conversations possible — not blame, but evidence.</p>
+<p>This reframes the purpose of data quality. The traditional question is: "Is this data fit for purpose?" — meaning, can the immediate consumer use it? The better question is: <strong>"Is this data fit for the journey?"</strong> Data rarely has one consumer. A dataset collected by a local council may pass through a regional aggregator, a central government platform, a statistical publication pipeline, and a public API before reaching its final consumers. Quality at the point of collection is not enough if the data degrades, is misinterpreted, or hits structural incompatibilities at any stage of that journey. Fit for the journey means the data carries enough structural metadata — masks, population profiles, assertion results — to be understood and validated at every stage, by every hand it passes through.</p>
+<p>The profiling reports described in this book — both the DQ mask frequency tables and the CP character profiling reports — are the raw telemetry for this monitoring architecture. They are structured, machine-readable, and designed to be stored and queried as fact tables. The technical implementation — time-partitioned directories, DuckDB queries, KPI dashboards — is covered in the Quality Monitoring chapter in Part III.</p>
+<p>The tools in Part III are the building blocks. The architecture they enable is a data quality assurance service: continuous, measurable, and accountable.</p>
+<p>Let's begin.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="foreword.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="01-why-data-quality-still-breaks-things.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="foreword.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="01-why-data-quality-still-breaks-things.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

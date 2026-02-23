@@ -1,0 +1,589 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Worked Example: Profiling UK Companies House Data - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/worked-example-companies-house.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="worked-example-profiling-uk-companies-house-data" class="unnumbered"><a class="header" href="#worked-example-profiling-uk-companies-house-data">Worked Example: Profiling UK Companies House Data</a></h1>
+<p>This appendix is a complete worked example. We take a real dataset — 99,999 company registration records from UK Companies House — and profile it end to end using bytefreq's low-grain Unicode (LU) masking. For each field, we show the actual mask frequency table, identify the cliff point where applicable, and catalogue every data quality issue we find. The result is a concrete illustration of the techniques described in the preceding chapters, applied to real government data with real problems.</p>
+<h2 id="the-dataset"><a class="header" href="#the-dataset">The Dataset</a></h2>
+<p>Companies House publishes a free monthly snapshot of every company registered in England and Wales, Scotland, and Northern Ireland. The <strong>BasicCompanyData</strong> file is a pipe-delimited extract containing company name, registered address, incorporation date, SIC codes, company status, and related metadata. It is freely available from <a href="http://download.companieshouse.gov.uk/">download.companieshouse.gov.uk</a>.</p>
+<p>The extract used here is <code>BasicCompanyData-2021-02-01-part6_6_100k.pip</code> — 99,999 records from the February 2021 release. It contains 55 columns, ranging from well-structured identifiers (company number) to free-text fields (company name, address lines) to date fields, categorical codes, and URLs. It is exactly the kind of messy, real-world dataset that DQOR techniques are designed for.</p>
+<h2 id="running-the-profile"><a class="header" href="#running-the-profile">Running the Profile</a></h2>
+<p>The profile was generated with a single command:</p>
+<pre><code class="language-bash">cat BasicCompanyData-2021-02-01-part6_6_100k.pip | bytefreq -g LU
+</code></pre>
+<p>We use LU (Low-grain Unicode) masking as the discovery grain — it collapses consecutive characters of the same class, producing a compact set of structural patterns for each column. This is the recommended starting point for any new dataset. Where precision matters, you can drill into specific fields with HU (High-grain Unicode) masking afterwards.</p>
+<h2 id="structure-discovery-column-population-analysis"><a class="header" href="#structure-discovery-column-population-analysis">Structure Discovery: Column Population Analysis</a></h2>
+<p>Before examining mask patterns, we count non-null values per column. For a tabular dataset this is the equivalent of the field path population analysis we perform on nested JSON — it tells us the shape of the data before we look at what is in it. In a pipe-delimited file with 55 columns, many of those columns will be sparsely populated, and knowing which ones are empty (and how empty) is the first step in understanding the dataset.</p>
+<pre><code>Column                                        Non-Null  % Populated
+----------------------------------------------------------------------
+CompanyName                                      99,999     100.0%
+CompanyNumber                                    99,999     100.0%
+CompanyCategory                                  99,999     100.0%
+CompanyStatus                                    99,999     100.0%
+CountryOfOrigin                                  99,998     100.0%
+Mortgages.NumMortCharges                         99,999     100.0%
+Mortgages.NumMortOutstanding                     99,999     100.0%
+Mortgages.NumMortPartSatisfied                   99,999     100.0%
+Mortgages.NumMortSatisfied                       99,999     100.0%
+SICCode.SicText_1                                99,999     100.0%
+LimitedPartnerships.NumGenPartners               99,999     100.0%
+LimitedPartnerships.NumLimPartners               99,999     100.0%
+URI                                              99,999     100.0%
+IncorporationDate                                99,947      99.9%
+ConfStmtNextDueDate                              96,331      96.3%
+RegAddress.AddressLine1                          96,168      96.2%
+RegAddress.PostCode                              95,632      95.6%
+RegAddress.PostTown                              94,988      95.0%
+Accounts.AccountRefDay                           94,821      94.8%
+Accounts.AccountRefMonth                         94,821      94.8%
+Returns.NextDueDate                              94,672      94.7%
+Accounts.NextDueDate                             94,610      94.6%
+ConfStmtLastMadeUpDate                           77,078      77.1%
+Accounts.AccountCategory                         75,465      75.5%
+Accounts.LastMadeUpDate                          69,539      69.5%
+RegAddress.Country                               65,069      65.1%
+RegAddress.AddressLine2                          63,688      63.7%
+Returns.LastMadeUpDate                           45,896      45.9%
+RegAddress.County                                38,625      38.6%
+SICCode.SicText_2                                12,406      12.4%
+PreviousName_1.CONDATE                           11,469      11.5%
+PreviousName_1.CompanyName                       11,469      11.5%
+SICCode.SicText_3                                 4,747       4.7%
+SICCode.SicText_4                                 2,040       2.0%
+PreviousName_2.CONDATE                            1,888       1.9%
+PreviousName_2.CompanyName                        1,888       1.9%
+RegAddress.CareOf                                 1,699       1.7%
+PreviousName_3.CONDATE                              379       0.4%
+PreviousName_3.CompanyName                          379       0.4%
+RegAddress.POBox                                    258       0.3%
+PreviousName_4.CONDATE                               69       0.1%
+PreviousName_4.CompanyName                           69       0.1%
+PreviousName_5.CONDATE                               25       0.0%
+PreviousName_5.CompanyName                           25       0.0%
+PreviousName_6.CONDATE                                6       0.0%
+PreviousName_6.CompanyName                            6       0.0%
+PreviousName_7.CONDATE                                2       0.0%
+PreviousName_7.CompanyName                            2       0.0%
+PreviousName_8.CONDATE                                0       0.0%
+PreviousName_8.CompanyName                            0       0.0%
+PreviousName_9.CONDATE                                0       0.0%
+PreviousName_9.CompanyName                            0       0.0%
+PreviousName_10.CONDATE                               0       0.0%
+PreviousName_10.CompanyName                           0       0.0%
+DissolutionDate                                       0       0.0%
+</code></pre>
+<p>The core identity fields — CompanyName, CompanyNumber, CompanyCategory, CompanyStatus, CountryOfOrigin — are 100% populated, or 99.998% in the case of CountryOfOrigin, which has exactly one empty record out of 99,999. These are the registration fundamentals, the columns that define what a company is before we know anything else about it. The four Mortgages columns and two LimitedPartnerships columns are also 100% populated, though as we will see in the field-by-field analysis, "populated" does not mean "informative" — most of these contain zeros. A column that is universally present but universally zero is telling us something about the schema rather than about the companies.</p>
+<p>The address block reveals a clear hierarchy of completeness. AddressLine1 (96.2%) and PostCode (95.6%) are near-universal, PostTown follows at 95.0%, then Country drops to 65.1%, AddressLine2 to 63.7%, and County falls to just 38.6%. County is the most sparsely populated address field, which we will confirm in the field-by-field analysis — but the population table already tells us that more than 60% of companies have no county recorded. This is not a data quality issue in the traditional sense; counties are increasingly optional in UK postal addresses and many companies simply do not provide one. The distinction matters: a field that is empty because the information was never required is fundamentally different from a field that is empty because something went wrong.</p>
+<p>The SIC code columns tell a story of diminishing specificity. SicText_1 is 100% populated (though 6,562 of those values are "None Supplied", which we will return to later), SicText_2 drops to 12.4%, SicText_3 to 4.7%, and SicText_4 to just 2.0%. Most companies declare a single industry classification. The 12.4% with a second SIC code are companies operating across multiple sectors — a recruitment agency that also provides training, for example. By the fourth code, only 2,040 companies remain, and these tend to be diversified conglomerates or holding companies with genuinely distinct lines of business.</p>
+<p>The PreviousName columns are the tabular equivalent of a ragged nested array. The schema allocates 10 slots (PreviousName_1 through PreviousName_10), but population drops exponentially: 11.5% of companies have changed name at least once, 1.9% at least twice, 0.4% three times, and by PreviousName_7 we are down to 2 companies. PreviousName_8 through PreviousName_10 are completely empty — no company in this extract has changed its name eight or more times. This is a classic schema design problem: pre-allocating fixed columns for a variable-length list. In nested JSON, this would be a single array of arbitrary length. In a flat file, it wastes 6 entirely empty column pairs and forces a hard limit of 10 name changes. The population analysis makes the waste visible at a glance. The exponential decay in population across these numbered column pairs is a strong signal that the underlying data model is — or was — a JSON array that has been flattened into fixed columns for tabular export. The original Companies House API does in fact serve this data as a JSON array of previous names with no fixed limit. The tabular export imposed the ten-slot ceiling, wasted six entirely empty column pairs, and lost the structural elegance of the original format. This is a common pattern in government open data: the machine-readable JSON is flattened into CSV or pipe-delimited files for broader accessibility, and structural information is lost in the translation.</p>
+<p>DissolutionDate is 0% populated across all 99,999 records, and this single observation tells us something important about the extract itself: this file contains only active companies. Dissolved companies would have a dissolution date. The column exists in the schema but is structurally empty in this particular data slice. This is the kind of insight that saves hours of investigation — you do not need to wonder whether dissolved companies are included, or build filters to exclude them. The population analysis answers that question before you read a single value.</p>
+<p>The accounts and returns fields show two tiers of completeness that reveal something about the lifecycle of a company. The "next due" dates (AccountRefDay, AccountRefMonth, NextDueDate, Returns.NextDueDate) cluster around 94–95% — these are forward-looking obligations that exist for almost every active company. But the "last made up" dates tell a different story: Accounts.LastMadeUpDate is 69.5% and Returns.LastMadeUpDate drops to just 45.9%. The gap between "when you must file" and "when you last filed" reveals that roughly 30% of companies have never filed accounts and 54% have never filed a return. These are most likely recently incorporated companies that have not yet reached their first filing deadline — they have obligations but no history of meeting them yet.</p>
+<h2 id="field-by-field-analysis"><a class="header" href="#field-by-field-analysis">Field-by-Field Analysis</a></h2>
+<h3 id="company-number"><a class="header" href="#company-number">Company Number</a></h3>
+<p><code>CompanyNumber</code></p>
+<pre><code>Mask     Count      %       Example
+9       87,730   87.7%      12432873
+A9      12,145   12.1%      GE000152
+A9A        124    0.1%      IP28746R
+</code></pre>
+<p>Three masks, no cliff point needed — with only three patterns, every one is worth understanding.</p>
+<p>The dominant format <code>9</code> (87.7%) represents standard company numbers — eight numeric digits like <code>12432873</code>. The <code>A9</code> pattern (12.1%) covers companies with letter prefixes: <code>GE000152</code> (German registered), <code>SC</code> (Scottish), <code>NI</code> (Northern Ireland), <code>OC</code> (overseas companies), and similar jurisdiction indicators. The rare <code>A9A</code> pattern (0.1%, 124 records) covers industrial and provident societies with a trailing letter, such as <code>IP28746R</code>.</p>
+<p><strong>Issues found:</strong> None. This is a well-structured identifier with consistent formatting. The three patterns are all legitimate and well-documented. A good assertion rule would validate that the prefix letters match known jurisdiction codes.</p>
+<h3 id="registered-address-postcode"><a class="header" href="#registered-address-postcode">Registered Address: Postcode</a></h3>
+<p><code>RegAddress.PostCode</code></p>
+<pre><code>Mask              Count      %       % of Prev   Example
+A9 9A            88,252   88.3%          —        L23 0RG
+A9A 9A            7,347    7.3%        8.3%       W1W 7LT
+(empty)           4,367    4.4%       59.4%
+A9A                  12    0.0%        0.3%       GU478QN          ← cliff point
+A9                    3    0.0%       25.0%       BB14006
+9                     3    0.0%      100.0%       0255
+9 9                   3    0.0%      100.0%       19 904
+A9 9A.                2    0.0%       66.7%       BR7 5HF.
+A9 9 A                2    0.0%      100.0%       WR9 9 AY
+A9 A                  2    0.0%      100.0%       BA14 HHD
+A9A9A                 1    0.0%       50.0%       EC1V2NX
+A_A9 9A               1    0.0%      100.0%       L;N9 6NE
+A 9                   1    0.0%      100.0%       BLOCK 3
+A 9A                  1    0.0%      100.0%       CRO 9XP
+9A A                  1    0.0%      100.0%       2L ONE
+A9A 9 A               1    0.0%      100.0%       EC1V 1 NR
+</code></pre>
+<p>This field is analysed in detail in Chapter 6 using the HU (high-grain) profile, which separates the five standard UK postcode formats. At LU grain, those five formats collapse into two masks: <code>A9 9A</code> (the standard pattern, e.g. <code>L23 0RG</code>) and <code>A9A 9A</code> (formats where the outward code ends in a letter, like <code>W1W 7LT</code>).</p>
+<p>The cliff drops from 7,347 to 12 — a percentage-of-previous of <strong>0.3%</strong>. Everything below is a data quality issue:</p>
+<ul>
+<li><code>A9A</code> (12 records, e.g. <code>GU478QN</code>) — valid postcodes with the space missing. <strong>Treatment:</strong> insert space before the inward code.</li>
+<li><code>A9 9A.</code> (2 records, e.g. <code>BR7 5HF.</code>) — trailing full stop. <strong>Treatment:</strong> strip trailing punctuation.</li>
+<li><code>A9 9 A</code> (2 records, e.g. <code>WR9 9 AY</code>) — extra space in the inward code. <strong>Treatment:</strong> normalise whitespace.</li>
+<li><code>A9A9A</code> (1 record: <code>EC1V2NX</code>) — a valid postcode with all spaces removed. <strong>Treatment:</strong> insert space before the inward code.</li>
+<li><code>A_A9 9A</code> (1 record: <code>L;N9 6NE</code>) — semicolon in the postcode, likely a typo for <code>LN9 6NE</code>. <strong>Treatment:</strong> character substitution rule.</li>
+<li><code>A 9</code> (1 record: <code>BLOCK 3</code>) — not a postcode at all. Address fragment in the wrong field.</li>
+<li><code>A 9A</code> (1 record: <code>CRO 9XP</code>) — likely a miskeyed <code>CR0 9XP</code> where the digit zero was typed as the letter O. <strong>Treatment:</strong> character substitution.</li>
+<li><code>9A A</code> (1 record: <code>2L ONE</code>) — not a postcode. Investigate source record.</li>
+<li><code>9</code> and <code>9 9</code> (3 each, e.g. <code>0255</code>, <code>19 904</code>) — numeric values, likely foreign postal codes or phone number fragments.</li>
+</ul>
+<h3 id="registered-address-post-town"><a class="header" href="#registered-address-post-town">Registered Address: Post Town</a></h3>
+<p><code>RegAddress.PostTown</code></p>
+<pre><code>Mask              Count      %       Example
+A                84,153   84.2%      READING
+A A               6,299    6.3%      HEBDEN BRIDGE
+(empty)           5,011    5.0%
+A A A             1,585    1.6%      STOCKTON ON TEES
+A-A-A             1,428    1.4%      STOCKTON-ON-TEES
+A. A                350    0.4%      ST. HELENS
+A_A A               184    0.2%      KING'S LYNN
+A A. A              179    0.2%      OTTERY ST. MARY
+A, A                151    0.2%      MERSEYSIDE,...
+A A A A              79    0.1%      HARROW ON THE...
+A A, A               78    0.1%      BILLINGTON ROAD,...
+A,                   62    0.1%      LONDON,
+A-A-A-A              60    0.1%      ASHBY-DE-LA-ZOUCH
+A-A                  44    0.0%      (various)
+A. A-A-A             43    0.0%      ST. (various)
+9 A A                32    0.0%      150 HOLYWOOD ROAD
+A _ A                26    0.0%      BRIGHTON &amp; HOVE
+A9 9A                14    0.0%      EH47 8PG
+9-9 A A              10    0.0%      1-7 KING STREET
+A 9                  10    0.0%      LEEDS 4
+A9A 9A                3    0.0%      W1K 5SL
+9                     2    0.0%      20037
+A 9-9                 1    0.0%      CT 0633-4409
+9A A                  1    0.0%      2ND FLOOR
+</code></pre>
+<p>...and 75 more masks.</p>
+<p>The top five masks are all legitimate town name patterns: single words (<code>READING</code>), two words (<code>HEBDEN BRIDGE</code>), three words (<code>STOCKTON ON TEES</code>), hyphenated forms (<code>STOCKTON-ON-TEES</code>), and abbreviated forms (<code>ST. HELENS</code>). Together they cover 98.5% of records.</p>
+<p>Below the cliff, things get interesting:</p>
+<ul>
+<li><code>A, A</code> (151 records, e.g. <code>MERSEYSIDE,...</code>) — town with trailing county or region, comma-separated. The town field is being used to store town-plus-county.</li>
+<li><code>A,</code> (62 records, e.g. <code>LONDON,</code>) — trailing comma, as if the value was split from a comma-separated address string but the comma came along for the ride. <strong>Treatment:</strong> strip trailing punctuation.</li>
+<li><code>9 A A</code> (32 records, e.g. <code>150 HOLYWOOD ROAD</code>) — a street address, not a town. Data in the wrong field entirely.</li>
+<li><code>A9 9A</code> (14 records, e.g. <code>EH47 8PG</code>) — a <strong>postcode</strong> in the town field. Classic column misalignment.</li>
+<li><code>9-9 A A</code> (10 records, e.g. <code>1-7 KING STREET</code>) — street addresses in the town field.</li>
+<li><code>A 9</code> (10 records, e.g. <code>LEEDS 4</code>) — historic postal district format. Legitimate but archaic.</li>
+<li><code>A9A 9A</code> (3 records, e.g. <code>W1K 5SL</code>) — another postcode in the town field.</li>
+<li><code>9</code> (2 records, e.g. <code>20037</code>) — a US ZIP code in the town field.</li>
+<li><code>9A A</code> (1 record: <code>2ND FLOOR</code>) — a floor number. Not a town by any definition.</li>
+</ul>
+<p><strong>Key finding:</strong> At least 59 records have postcodes or street addresses in the town field, indicating systematic column misalignment in a subset of the source data.</p>
+<h3 id="registered-address-county"><a class="header" href="#registered-address-county">Registered Address: County</a></h3>
+<p><code>RegAddress.County</code></p>
+<pre><code>Mask              Count      %       Example
+(empty)          61,374   61.4%
+A                30,482   30.5%      HERTFORDSHIRE
+A A               6,948    6.9%      WEST MIDLANDS
+A A A               626    0.6%      ENGLAND AND WALES
+A. A                111    0.1%      CO. DURHAM
+A _ A               104    0.1%      TYNE &amp; WEAR
+A.                   49    0.0%      KENT.
+A A A A              40    0.0%      EAST RIDING OF...
+A,                   35    0.0%      WORCESTER,
+A-A                  33    0.0%      INVERNESS-SHIRE
+A, A                 22    0.0%      HARROW, MIDDLESEX
+A 9                  14    0.0%      DELAWARE 19801
+A9 9A                11    0.0%      N3 2SB
+A-A-A                10    0.0%      STOKE-ON-TRENT
+9                     9    0.0%      100031
+A _A_                 8    0.0%      COUNTY (OPTIONAL)
+A.A                   7    0.0%      S.GLAMORGAN
+A. A.                 7    0.0%      CO. ANTRIM.
+A9                    7    0.0%      WC1
+A A 9                 6    0.0%      NEW YORK 10286
+-                     3    0.0%      -
+A 9 A                 3    0.0%      WY 82001 USA
+A.A.A.                3    0.0%      R.C.T.
+A 9-9                 3    0.0%      TOKYO 100-8051
+A. A9 9A              2    0.0%      WILTSHIRE. SN14...
+A9 9A.                2    0.0%      DN1 2HD.
+A.A.                  2    0.0%      U.K.
+A A.                  2    0.0%      WEST YORKS.
+-A-                   1    0.0%      --SELECT--
+.                     1    0.0%      .
+A9A 9A                1    0.0%      LONDONWC1X 8JX
+- -                   1    0.0%      - -
+A. A9A                1    0.0%      CAMBS. PE189QX
+A.A.A9 9A             1    0.0%      N.WALES.LL15 1LG
+A - A                 1    0.0%      ENGLAND - UK
+_A A, A A A_          1    0.0%      [OUTSIDE US, ENTER COUNTY HERE]
+</code></pre>
+<p>The county field is 61.4% empty — expected, since counties are increasingly optional in UK addresses. The legitimate patterns (<code>A</code>, <code>A A</code>, <code>A A A</code>) cover 97.8% of populated values.</p>
+<p>Below the cliff, a catalogue of problems:</p>
+<ul>
+<li><code>A.</code> (49 records, e.g. <code>KENT.</code>) — trailing full stop on county names. <strong>Treatment:</strong> strip trailing punctuation.</li>
+<li><code>A,</code> (35 records, e.g. <code>WORCESTER,</code>) — trailing comma. <strong>Treatment:</strong> strip trailing punctuation.</li>
+<li><code>A 9</code> (14 records, e.g. <code>DELAWARE 19801</code>) — US state with ZIP code. Foreign address data in the county field.</li>
+<li><code>A9 9A</code> (11 records, e.g. <code>N3 2SB</code>) — UK postcodes in the county field. Column misalignment again.</li>
+<li><code>9</code> (9 records, e.g. <code>100031</code>) — pure numeric. Likely foreign postal codes.</li>
+<li><code>A _A_</code> (8 records: <code>COUNTY (OPTIONAL)</code>) — placeholder text left by a web form. The literal string "COUNTY (OPTIONAL)" was submitted as the county value.</li>
+<li><code>A A 9</code> (6 records, e.g. <code>NEW YORK 10286</code>) — US city with ZIP code.</li>
+<li><code>A 9-9</code> (3 records, e.g. <code>TOKYO 100-8051</code>) — Japanese address data. This is not a UK county.</li>
+<li><code>-</code> (3 records) and <code>- -</code> (1 record) — dash placeholders, the universal "I had to put something in this field."</li>
+<li><code>A. A9 9A</code> (2 records, e.g. <code>WILTSHIRE. SN14...</code>) — county with postcode appended.</li>
+<li><code>A9 9A.</code> (2 records, e.g. <code>DN1 2HD.</code>) — a postcode with a trailing full stop, in the county field.</li>
+<li><code>-A-</code> (1 record: <code>--SELECT--</code>) — a web form dropdown placeholder that was submitted as data. Someone's browser rendered a <code>&lt;select&gt;</code> element, they left it on the default option, and the literal text <code>--SELECT--</code> was persisted to the database.</li>
+<li><code>A9A 9A</code> (1 record: <code>LONDONWC1X 8JX</code>) — an entire postcode, concatenated with the city name, stuffed into the county field.</li>
+<li><code>A. A9A</code> (1 record: <code>CAMBS. PE189QX</code>) — an abbreviated county with a postcode jammed onto the end.</li>
+<li><code>A.A.A9 9A</code> (1 record: <code>N.WALES.LL15 1LG</code>) — abbreviated region with an unseparated postcode.</li>
+<li><code>_A A, A A A_</code> (1 record: <code>[OUTSIDE US, ENTER COUNTY HERE]</code>) — instructional placeholder text from a web form, complete with square brackets, submitted as the actual county value.</li>
+</ul>
+<p><strong>Key finding:</strong> The county field is a dumping ground. Web form placeholders (<code>COUNTY (OPTIONAL)</code>, <code>--SELECT--</code>, <code>[OUTSIDE US, ENTER COUNTY HERE]</code>), foreign addresses (<code>DELAWARE 19801</code>, <code>NEW YORK 10286</code>, <code>TOKYO 100-8051</code>), postcodes, and trailing punctuation all appear. This single field demonstrates why profiling by masks is more effective than regex validation — the variety of failure modes is too diverse for any reasonable set of hand-written rules to catch.</p>
+<h3 id="registered-address-country"><a class="header" href="#registered-address-country">Registered Address: Country</a></h3>
+<p><code>RegAddress.Country</code></p>
+<pre><code>Mask              Count      %       Example
+A                41,019   41.0%      ENGLAND
+(empty)          34,930   34.9%
+A A              24,039   24.0%      UNITED KINGDOM
+A A A                 5    0.0%      ISLE OF MAN
+A A, A                5    0.0%      VIRGIN ISLANDS,...
+A _ A                 1    0.0%      ENGLAND &amp; WALES
+</code></pre>
+<p>Three legitimate patterns that together account for 99.97% of records. But there is a consistency problem: <code>A</code> (41,019) covers single-word countries like <code>ENGLAND</code>, <code>SCOTLAND</code>, <code>WALES</code>, while <code>A A</code> (24,039) covers <code>UNITED KINGDOM</code>. These are the same country expressed differently — some records say <code>ENGLAND</code>, others say <code>UNITED KINGDOM</code>, and 34.9% say nothing at all.</p>
+<p>Below the cliff:</p>
+<ul>
+<li><code>A A A</code> (5 records, e.g. <code>ISLE OF MAN</code>) — legitimate, just rare.</li>
+<li><code>A A, A</code> (5 records, e.g. <code>VIRGIN ISLANDS,...</code>) — legitimate but includes comma formatting.</li>
+<li><code>A _ A</code> (1 record: <code>ENGLAND &amp; WALES</code>) — a jurisdiction description, not a country name. This is what someone writes when they are not sure which constituent nation to pick.</li>
+</ul>
+<p><strong>Key finding:</strong> The real issue here is not the exceptions — it is the inconsistency between <code>ENGLAND</code> and <code>UNITED KINGDOM</code> as country values. A treatment function should normalise these to a single canonical form (such as ISO 3166 country code <code>GB</code>).</p>
+<h3 id="company-category"><a class="header" href="#company-category">Company Category</a></h3>
+<p><code>CompanyCategory</code></p>
+<pre><code>Mask                                               Count      %       Example
+Aa Aa Aa                                          85,872   85.9%      Private Limited Company
+A_A A A_A _Aa, a a a, a a a_                       6,203    6.2%      PRI/LTD BY GUAR/NSC (Private, limited by guarantee, no share capital)
+A_A_A _Aa, Aa a a, a a a, a a _Aa_ a_              5,585    5.6%      PRI/LBG/NSC (Private, Limited by guarantee, no share capital, use of 'Limited' exemption)
+Aa Aa                                               1,631    1.6%      Limited Partnership
+Aa Aa Aa Aa                                           455    0.5%      Scottish Limited Partnership
+Aa a a                                                137    0.1%      Other company type
+Aa Aa a Aa Aa                                          89    0.1%      Investment Company with Variable Capital
+A A A. 9 _Aa a a, a 9 a a Aa Aa_                       3    0.0%      PRIV LTD SECT. 30 (Private limited company, section 30 of the Companies Act)
+</code></pre>
+<p>Two formatting conventions exist side by side: human-readable title case (<code>Private Limited Company</code>, 85.9%) and coded abbreviations with parenthetical expansions (<code>PRI/LTD BY GUAR/NSC (Private, limited by guarantee, no share capital)</code>, 6.2%; <code>PRI/LBG/NSC (Private, Limited by guarantee, no share capital, use of 'Limited' exemption)</code>, 5.6%). The coded forms use slashes, parentheses, and abbreviations — a completely different format from the title case descriptions.</p>
+<p>The 3-record <code>PRIV LTD SECT. 30</code> mask is a third variation: all-caps abbreviation with a section number reference and a parenthetical expansion. Three encoding schemes in a single column.</p>
+<p><strong>Key finding:</strong> This field has multiple distinct encoding schemes coexisting. A treatment function should either expand the abbreviations to full text or code the full text to abbreviations, depending on the consumer's needs. The profiler has discovered what no schema definition would tell you: the field is not consistently formatted.</p>
+<h3 id="company-status"><a class="header" href="#company-status">Company Status</a></h3>
+<p><code>CompanyStatus</code></p>
+<pre><code>Mask                                Count      %       Example
+Aa                                 96,621   96.6%      Active
+Aa - Aa a Aa a                      3,277    3.3%      Active - Proposal to Strike off
+Aa Aa                                  79    0.1%      Voluntary Arrangement
+Aa a Aa Aa a a a a a                   12    0.0%      Live but Receiver Manager on at least one charge
+Aa Aa_Aa Aa                             5    0.0%      In Administration/Administrative Receiver
+A                                       5    0.0%      RECEIVERSHIP
+</code></pre>
+<p>96.6% of companies are <code>Active</code>. The <code>A</code> mask (5 records: <code>RECEIVERSHIP</code>) is the only ALL-CAPS value in a field that otherwise uses title case. This is a minor casing inconsistency — but it is the kind of thing that breaks a <code>CASE WHEN</code> statement or a join on status values. A downstream query looking for <code>WHERE status = 'Receivership'</code> will silently miss these five records.</p>
+<p><strong>Treatment:</strong> Normalise casing to title case.</p>
+<h3 id="country-of-origin"><a class="header" href="#country-of-origin">Country of Origin</a></h3>
+<p><code>CountryOfOrigin</code></p>
+<pre><code>Mask              Count      %       Example
+Aa Aa            99,868   99.9%      United Kingdom
+A A                  78    0.1%      SOUTH KOREA
+A                    45    0.0%      AUSTRALIA
+A A A                 6    0.0%      UNITED ARAB EMIRATES
+A A, A                1    0.0%      VIRGIN ISLANDS, BRITISH
+(empty)               1    0.0%
+</code></pre>
+<p>99.87% of records show <code>United Kingdom</code> in title case. The remaining 131 records use ALL-CAPS (<code>SOUTH KOREA</code>, <code>AUSTRALIA</code>, <code>UNITED ARAB EMIRATES</code>). This is the same field in the same dataset using two different casing conventions — title case for UK records, all-caps for foreign origins.</p>
+<p>One record is completely empty — a company with no country of origin recorded.</p>
+<p><strong>Treatment:</strong> Normalise casing. Consider mapping to ISO 3166 country codes for consistency.</p>
+<h3 id="incorporation-date"><a class="header" href="#incorporation-date">Incorporation Date</a></h3>
+<p><code>IncorporationDate</code></p>
+<pre><code>Mask              Count      %       Example
+9_9_9            99,947   99.9%      07/12/2016
+(empty)              52    0.1%
+</code></pre>
+<p>99.95% of records have a date in <code>DD/MM/YYYY</code> format (which LU collapses to <code>9_9_9</code>, as in <code>07/12/2016</code>). But 52 companies have <strong>no incorporation date</strong>. How does a registered company not have an incorporation date? These are likely very old companies (pre-dating digital records) or special entity types where the concept does not apply. Worth investigating but not necessarily an error.</p>
+<p><strong>Action:</strong> Flag for review. These 52 records are genuine edge cases in the domain, not data entry errors.</p>
+<h3 id="accounts-category"><a class="header" href="#accounts-category">Accounts Category</a></h3>
+<p><code>Accounts.AccountCategory</code></p>
+<pre><code>Mask              Count      %       Example
+A A A            54,633   54.6%      NO ACCOUNTS FILED
+(empty)          24,534   24.5%
+A                18,041   18.0%      GROUP
+A A               2,751    2.8%      UNAUDITED ABRIDGED
+A A A A              40    0.0%      ACCOUNTS TYPE NOT AVAILABLE
+</code></pre>
+<p>The dominant value is <code>NO ACCOUNTS FILED</code> (54.6%), followed by empty (24.5%) and single-word categories like <code>GROUP</code> (18.0%), then two-word categories like <code>UNAUDITED ABRIDGED</code> (2.8%). The 40 records matching <code>A A A A</code> are literally <code>ACCOUNTS TYPE NOT AVAILABLE</code> — a system-generated placeholder rather than a real category.</p>
+<p>No structural data quality issues here — the patterns are all legitimate. But the 24.5% empty rate is worth noting: nearly a quarter of companies have no accounts category recorded. This could indicate recently incorporated companies that have not yet filed.</p>
+<h3 id="sic-code"><a class="header" href="#sic-code">SIC Code</a></h3>
+<p><code>SICCode.SicText_1</code></p>
+<pre><code>Mask                                  Count      %       Example
+9 - Aa a a a                        17,112   17.1%      59111 - Motion picture production activities
+9 - Aa a a                          11,233   11.2%      93199 - Other sports activities
+9 - Aa a                             8,558    8.6%      55900 - Other accommodation
+9 - Aa a a a a a.a.a.                7,068    7.1%      94990 - Activities of other membership organisations n.e.c.
+9 - Aa a a a a                       6,959    7.0%      46450 - Wholesale of perfume and cosmetics
+Aa Aa                                 6,562    6.6%      None Supplied
+9 - Aa a a a a a a                    5,875    5.9%      70229 - Management consultancy activities (other than financial management)
+9 - Aa a a a a a a a a a              3,935    3.9%      68320 - Management of real estate on a fee or contract basis
+9 - Aa a a a.a.a.                     3,064    3.1%      96090 - Other personal service activities n.e.c.
+9 - Aa Aa                             2,896    2.9%      99999 - Dormant Company
+</code></pre>
+<p>...and 143 more masks (153 total).</p>
+<p>The SIC code field combines a 5-digit code with a human-readable description: <code>59111 - Motion picture production activities</code>. The LU masks vary because the descriptions vary in word count, punctuation, and casing. There are 153 unique masks — high cardinality driven by the diversity of SIC code descriptions.</p>
+<p>The outlier is <code>Aa Aa</code> (6,562 records): <code>None Supplied</code>. These are companies that registered without providing a SIC code. The mask tells us immediately that this value is structurally different from every other entry — it has no leading numeric code and no dash separator. A simple assertion rule could flag it: if the SIC code does not start with digits, it is not a valid code.</p>
+<p><strong>Key finding:</strong> The SIC code field is a composite field — a code and a description packed into a single column. The profiler cannot separate these without domain logic, but it can tell you that the structure is consistent across 93.4% of records and that <code>None Supplied</code> is the primary exception.</p>
+<h2 id="summary-of-findings"><a class="header" href="#summary-of-findings">Summary of Findings</a></h2>
+<p>Issues discovered through mask-based profiling of 99,999 Companies House records:</p>
+<p><strong>Postcodes:</strong></p>
+<ul>
+<li>Missing spaces in valid postcodes (12 records, e.g. <code>GU478QN</code>) → <strong>Treatment:</strong> insert space</li>
+<li>Trailing punctuation (2 records, e.g. <code>BR7 5HF.</code>) → <strong>Treatment:</strong> strip trailing characters</li>
+<li>Extra whitespace (2 records, e.g. <code>WR9 9 AY</code>) → <strong>Treatment:</strong> normalise whitespace</li>
+<li>Typos/special characters (1 record: <code>L;N9 6NE</code> with semicolon) → <strong>Treatment:</strong> character substitution</li>
+<li>Non-postcode data in postcode field (5 records, e.g. <code>BLOCK 3</code>, <code>2L ONE</code>) → <strong>Flag</strong> for review</li>
+</ul>
+<p><strong>Post Town:</strong></p>
+<ul>
+<li>Postcodes in town field (17+ records, e.g. <code>EH47 8PG</code>, <code>W1K 5SL</code>) → <strong>Flag:</strong> column misalignment</li>
+<li>Street addresses in town field (42+ records, e.g. <code>150 HOLYWOOD ROAD</code>, <code>1-7 KING STREET</code>) → <strong>Flag:</strong> column misalignment</li>
+<li>Trailing commas and punctuation (62+ records, e.g. <code>LONDON,</code>) → <strong>Treatment:</strong> strip trailing punctuation</li>
+<li>Non-address data (1 record: <code>2ND FLOOR</code>) → <strong>Flag</strong> for review</li>
+</ul>
+<p><strong>County:</strong></p>
+<ul>
+<li>Trailing punctuation (84 records, e.g. <code>KENT.</code>, <code>WORCESTER,</code>) → <strong>Treatment:</strong> strip trailing characters</li>
+<li>Postcodes in county field (11 records, e.g. <code>N3 2SB</code>) → <strong>Flag:</strong> column misalignment</li>
+<li>Foreign address data (20+ records, e.g. <code>DELAWARE 19801</code>, <code>NEW YORK 10286</code>, <code>TOKYO 100-8051</code>) → <strong>Flag:</strong> non-UK addresses</li>
+<li>Web form placeholders: <code>COUNTY (OPTIONAL)</code>, <code>--SELECT--</code>, <code>[OUTSIDE US, ENTER COUNTY HERE]</code> (10 records) → <strong>Treatment:</strong> replace with empty</li>
+<li>Dash placeholders (4 records) → <strong>Treatment:</strong> replace with empty</li>
+</ul>
+<p><strong>Country:</strong></p>
+<ul>
+<li>Inconsistent representation: <code>ENGLAND</code> vs <code>UNITED KINGDOM</code> vs empty → <strong>Treatment:</strong> normalise to ISO country code</li>
+<li>34.9% empty → <strong>Accept</strong> (empty is valid for this field)</li>
+</ul>
+<p><strong>Company Category:</strong></p>
+<ul>
+<li>Multiple encoding schemes (human-readable <code>Private Limited Company</code> vs coded <code>PRI/LTD BY GUAR/NSC</code> vs <code>PRIV LTD SECT. 30</code>) → <strong>Treatment:</strong> normalise to single format</li>
+</ul>
+<p><strong>Company Status:</strong></p>
+<ul>
+<li>Inconsistent casing: <code>RECEIVERSHIP</code> vs <code>Active</code> → <strong>Treatment:</strong> normalise to title case</li>
+</ul>
+<p><strong>Country of Origin:</strong></p>
+<ul>
+<li>Inconsistent casing: <code>United Kingdom</code> (title case) vs <code>SOUTH KOREA</code> (all-caps) → <strong>Treatment:</strong> normalise casing</li>
+</ul>
+<p><strong>Incorporation Date:</strong></p>
+<ul>
+<li>52 records with no date → <strong>Flag</strong> for investigation (likely pre-digital or special entity types)</li>
+</ul>
+<p><strong>SIC Code:</strong></p>
+<ul>
+<li>6,562 records with <code>None Supplied</code> instead of a code → <strong>Assertion rule:</strong> SIC code must start with digits</li>
+</ul>
+<h2 id="lessons-learned"><a class="header" href="#lessons-learned">Lessons Learned</a></h2>
+<p><strong>1. Government data is not clean data.</strong> This is an official register maintained by a statutory body. It is well-structured by the standards of real-world data, and it still contains web form placeholders (<code>--SELECT--</code>, <code>COUNTY (OPTIONAL)</code>, <code>[OUTSIDE US, ENTER COUNTY HERE]</code>), column misalignment (postcodes in the town and county fields), inconsistent casing, trailing punctuation, and foreign address fragments. If Companies House data has these issues, every dataset you receive will have them.</p>
+<p><strong>2. Mask profiling finds issues that schemas cannot.</strong> A schema tells you the postcode field is a string. Mask profiling tells you that 16 of the 99,999 records have structural anomalies — and shows you exactly what each one looks like. The postcode field has a single dominant pattern covering 88.3% of records, and every deviation from it is immediately visible in the mask frequency table.</p>
+<p><strong>3. The cliff point works.</strong> In every field with more than a handful of masks, the frequency distribution showed a clear separation between expected patterns and exceptions. The postcode cliff (7,347 → 12), the county cliff (104 → 49), the post town cliff (151 → 79) — each one cleanly separates the normal from the exceptional.</p>
+<p><strong>4. Column misalignment is a real and common problem.</strong> Postcodes appearing in the town field, street addresses appearing in the town field, postcodes appearing in the county field — these are not random errors. They indicate systematic problems in how data was entered, migrated, or mapped between systems. Mask profiling detects them instantly because the structural pattern of a postcode (<code>A9 9A</code>) is unmistakable when it appears in a field full of alphabetic town names (<code>A</code>).</p>
+<p><strong>5. Real examples make the conversation possible.</strong> Every mask in the frequency table maps to a real value. When you can point to <code>--SELECT--</code> in the county field, or <code>150 HOLYWOOD ROAD</code> in the post town field, or <code>TOKYO 100-8051</code> as a UK county, the conversation with data owners moves from abstract ("there are quality issues") to concrete ("here are the specific records, here is what happened, here is how we fix it"). The examples are the evidence. Without them, you have statistics. With them, you have a story.</p>
+<p><strong>6. One profiling run, twenty minutes, real insight.</strong> The entire analysis in this appendix was generated from a single <code>bytefreq</code> command that took seconds to run. The interpretation took longer, but the profiler did all the heavy lifting: it found the patterns, counted them, sorted them by frequency, and provided examples. Every issue catalogued above was visible in the raw output without writing a single validation rule.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="getting-started.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="worked-example-jma-earthquake.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="getting-started.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="worked-example-jma-earthquake.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,310 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>The Tools: DataRadar and bytefreq - Data Quality on Read</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="A practical guide to mask-based data profiling with bytefreq and dataradar">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom.css">
+
+
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "ayu" : "light";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc.js"></script>
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var sidebar = null;
+            var sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+            }
+            sidebar_toggle.checked = sidebar === 'visible';
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </label>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Data Quality on Read</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/minkymorgan/DataQualityOnRead/edit/main/src/src/en/10-the-tools.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="the-tools-dataradar-and-bytefreq"><a class="header" href="#the-tools-dataradar-and-bytefreq">The Tools: DataRadar and bytefreq</a></h1>
+<p>The techniques described in this book are implemented in two open-source tools, each designed for a different scale and a different user. The underlying profiling engine is the same across both; what changes is the deployment model, the interface, and the volume of data each can handle.</p>
+<h2 id="dataradar-browser-based-profiling"><a class="header" href="#dataradar-browser-based-profiling">DataRadar: Browser-Based Profiling</a></h2>
+<p>DataRadar is a browser-based data quality profiler that runs entirely client-side using WebAssembly. You upload a file — CSV, Excel, JSON, or NDJSON — and the profiling happens in your browser. No data is sent to any server. No software needs to be installed.</p>
+<p>This matters more than it might initially seem. In many organisations — councils, NHS trusts, universities, small businesses — the people who need to assess data quality are working on locked-down machines where they cannot install software. They have no Python, no R, no SQL tools. What they have is a web browser. DataRadar meets them where they are.</p>
+<p>The browser tool supports the full DQOR workflow: mask-based profiling at multiple grain levels, population analysis, script detection, and flat enhanced output. For nested or semi-structured data (JSON, GeoJSON), it can flatten the structure and produce the parallel column families (<code>.raw</code>, <code>.HU</code>, <code>.LU</code>, <code>.Rules</code>) as a downloadable NDJSON file that can be loaded directly into Pandas, Polars, DuckDB, or any other tool that reads newline-delimited JSON.</p>
+<p>A typical use case: a council data analyst receives a GeoJSON feed of planning applications from a government portal. They paste the URL into DataRadar, the tool fetches and profiles the data, and within seconds they can see the structural patterns in each field — including fields with epoch timestamps that the tool has automatically detected and offered to convert to human-readable datetimes. They export the flat enhanced output, load it into Excel or a notebook, and proceed with their analysis using whichever columns they need: raw values for verification, masks for quality assessment, suggested treatments for convenience.</p>
+<p>DataRadar is free and available at <a href="https://dataradar.co.uk">dataradar.co.uk</a>. It handles datasets up to approximately 50,000 rows comfortably, depending on the browser and the machine. For anything larger, bytefreq (described below and in detail in Chapter 13) provides the same profiling engine without the browser's memory constraints.</p>
+<h2 id="bytefreq-the-command-line-profiler"><a class="header" href="#bytefreq-the-command-line-profiler">bytefreq: The Command-Line Profiler</a></h2>
+<p>For larger datasets, or for integration into automated pipelines, <strong>bytefreq</strong> is the CLI tool. It is implemented in Rust, multi-threaded using Rayon, and handles CSV, JSON, NDJSON, Excel (.xlsx, .xls, .xlsb, .ods), and Apache Parquet formats — including nested structs, list columns, and automatic timestamp conversion. It is designed for Unix-style pipe workflows and can process files with millions of rows.</p>
+<p>The name is historical. The original bytefreq was written in awk in 2007 as a byte-frequency profiler — a tool for counting the frequency of each byte value in a file to determine encoding, delimiters, and character distributions. Over time, it evolved to include the mask-based profiling functions described in this book. The current Rust implementation is a ground-up rewrite that retains the name and the profiling philosophy while delivering the performance needed for large-scale local processing.</p>
+<h3 id="installation"><a class="header" href="#installation">Installation</a></h3>
+<pre><code class="language-bash"># Install Rust if needed
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# Install bytefreq from GitHub (with all format support)
+cargo install --git https://github.com/minkymorgan/bytefreq --features parquet,excel
+</code></pre>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<pre><code class="language-bash"># Profile a CSV file using high-grain Unicode masking
+cat data.csv | bytefreq -g HU
+
+# Profile with low-grain masking
+cat data.csv | bytefreq -g LU
+
+# Profile JSON data
+cat data.json | bytefreq -f json
+
+# Profile an Excel file
+bytefreq -f excel --excel-path data.xlsx
+
+# Profile a Parquet file
+bytefreq -f parquet --parquet-path data.parquet
+
+# Character frequency profiling (encoding inspection)
+cat data.csv | bytefreq -r CP
+
+# Generate flat enhanced output with quality assertions
+cat data.csv | bytefreq -E
+</code></pre>
+<p>The <code>-E</code> flag produces the flat enhanced format described in Chapter 9: each field in the input is expanded into its family of parallel columns (<code>.raw</code>, <code>.HU</code>, <code>.LU</code>, <code>.Rules</code>), with automatically inferred quality assertions in the Rules column. This output can be piped to a file, loaded into a database, or consumed by a downstream pipeline.</p>
+<p>bytefreq is designed for pipe-based workflows, which means it composes naturally with other Unix tools:</p>
+<pre><code class="language-bash"># Profile the first 10,000 rows of a compressed file
+zcat data.csv.gz | head -10000 | bytefreq -g HU
+
+# Profile and extract only the masks for column 3
+cat data.csv | bytefreq -g HU | jq '.columns[2].masks'
+
+# Profile an Excel file (requires the excel feature)
+cargo install --git https://github.com/minkymorgan/bytefreq --features excel
+bytefreq -f excel --excel-path data.xlsx --sheet 1
+</code></pre>
+<p>bytefreq is open source, licensed under MIT, and available at <a href="https://github.com/minkymorgan/bytefreq">github.com/minkymorgan/bytefreq</a>.</p>
+<h2 id="scaling-beyond-a-single-machine"><a class="header" href="#scaling-beyond-a-single-machine">Scaling Beyond a Single Machine</a></h2>
+<p>For organisations working with billions of rows, neither a browser tool nor a single-machine CLI is sufficient. The good news is that mask-based profiling is inherently parallelisable, and there are concrete paths to scaling it without building a custom framework from scratch.</p>
+<h3 id="why-it-parallelises-cleanly"><a class="header" href="#why-it-parallelises-cleanly">Why It Parallelises Cleanly</a></h3>
+<p>The mask function is a stateless per-value transformation: it takes a string in and produces a mask out, with no dependencies on other values, other rows, or other columns. This makes it embarrassingly parallel — the same property that makes <code>map()</code> operations fast in Spark, Flink, Polars, and DuckDB. The assertion rules are equally independent: each rule examines a single (field_name, raw, HU, LU) tuple and produces a result with no side effects. The flat enhanced output is a wide table that maps naturally to columnar storage formats like Parquet, Delta Lake, and Apache Iceberg — the same lakehouse formats that carry the Hadoop-era denormalisation pattern (as described in Chapter 9) into modern cloud architectures.</p>
+<h3 id="practical-scaling-options"><a class="header" href="#practical-scaling-options">Practical Scaling Options</a></h3>
+<p><strong>DuckDB</strong> handles hundreds of millions of rows on a single machine with minimal setup. The bytefreq CLI can generate flat enhanced NDJSON output, which DuckDB reads natively. For datasets in the hundreds-of-millions range, this is often sufficient:</p>
+<pre><code class="language-bash">cat large_dataset.csv | bytefreq -d ',' -E &gt; enhanced.ndjson
+duckdb -c "
+  CREATE TABLE dq AS SELECT * FROM read_ndjson_auto('enhanced.ndjson');
+  SELECT \"postcode.HU\" AS mask, COUNT(*) AS cnt
+  FROM dq GROUP BY mask ORDER BY cnt DESC LIMIT 20;
+"
+</code></pre>
+<p><strong>Polars</strong> (Python or Rust) can apply the mask function as a custom expression across a LazyFrame, leveraging its multi-threaded query engine. For teams already using Polars for data processing, wrapping the bytefreq mask logic in a Polars UDF is straightforward.</p>
+<p><strong>Apache Spark</strong> remains the standard for datasets measured in billions of rows. The mask function can be implemented as a Spark UDF (in Scala, Python, or — via the Spark Rust bindings — directly in Rust) and applied across a distributed DataFrame. The flat enhanced output writes naturally to Parquet with Snappy compression, partitioned by date or source for efficient downstream querying. The mask function described in Chapter 4 can be implemented in approximately 20 lines of Scala:</p>
+<pre><code class="language-scala">val maskUDF = udf((value: String) =&gt; {
+  if (value == null) ""
+  else value.map {
+    case c if c.isUpper =&gt; 'A'
+    case c if c.isLower =&gt; 'a'
+    case c if c.isDigit =&gt; '9'
+    case c =&gt; c
+  }.mkString
+})
+
+df.withColumn("name_HU", maskUDF(col("name")))
+  .withColumn("name_LU", /* collapse consecutive same-class chars */)
+  .write.parquet("enhanced_output/")
+</code></pre>
+<p><strong>Cloud-native options</strong> such as AWS Glue, GCP Dataflow, and Azure Synapse all support UDF-based transformations at scale. The mask function is small enough to inline in a serverless job definition — no external library dependencies required.</p>
+<h3 id="the-product-ladder"><a class="header" href="#the-product-ladder">The Product Ladder</a></h3>
+<p>The tools form a natural scaling path:</p>
+<ol>
+<li><strong>DataRadar</strong> (browser) — free, zero-install, up to ~50K rows. Perfect for quick checks, exploratory profiling, and environments where software installation is not possible.</li>
+<li><strong>bytefreq</strong> (CLI) — free, open source, millions of rows. Supports CSV, JSON, Excel, and Parquet natively. For data engineers, CI/CD pipelines, and automated profiling workflows on a single machine.</li>
+<li><strong>DuckDB / Polars</strong> — hundreds of millions of rows on a single machine, using bytefreq's flat enhanced output as the input.</li>
+<li><strong>Spark / cloud engines</strong> — billions to trillions of rows, implementing the mask function as a UDF in a distributed framework.</li>
+</ol>
+<p>The profiling philosophy, the mask functions, and the flat enhanced output format are consistent across all of these. A profile generated by DataRadar in a browser is structurally identical to one generated by a Spark job on a thousand-node cluster. The techniques scale; you choose the engine that fits your volume.</p>
+<h3 id="enterprise-support"><a class="header" href="#enterprise-support">Enterprise Support</a></h3>
+<p>For organisations that need help implementing DQOR at scale, we offer commercial consulting and support through Gamakon. This includes bespoke implementations built on our fork of the <a href="https://github.com/UKHomeOffice/data-quality-profiler-and-rules-engine">Data Quality Profiler and Rules Engine</a>, an open-source Spark-based tool proven at enterprise scale. Contact <a href="mailto:andrew@gamakon.ai">andrew@gamakon.ai</a> for details.</p>
+<h2 id="choosing-the-right-tool"><a class="header" href="#choosing-the-right-tool">Choosing the Right Tool</a></h2>
+<p>The decision is usually straightforward. If you are exploring a dataset for the first time and want to understand its structure quickly, use DataRadar in the browser — it takes seconds and requires nothing to be installed. If you are profiling data as part of an automated pipeline, or the dataset is too large for the browser, use bytefreq on the command line.</p>
+<p>In many organisations, both tools coexist. Data analysts use DataRadar for ad-hoc exploration. Data engineers use bytefreq in CI/CD pipelines and automated quality gates. The consistent profiling output across both means that quality rules and treatment functions developed using one tool can be deployed on the other.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="09-flat-enhanced-format.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next prefetch" href="11-quality-monitoring.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="09-flat-enhanced-format.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next prefetch" href="11-quality-monitoring.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+    </div>
+    </body>
+</html>
